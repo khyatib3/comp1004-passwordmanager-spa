@@ -22,3 +22,11 @@ body {
     margin: 0;
     font-size: 0.9rem;
 }
+
+.section{
+    display: none;
+}
+
+.section.active{
+    display: block;
+}
