@@ -23,7 +23,7 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('home')">Home</a></li>
-                <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('viewAccounts')">View Accounts</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" onclick="checkLoginBeforeViewAccounts()">View Accounts</a></li>
                 <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('addAccount')">Add Account</a></li>
             </ul>
         </div>
@@ -35,8 +35,8 @@
     <div class="container">
         <h1 class="display-4">Secure Your Passwords with PasswordHaven</h1>
         <p class="lead">The safest and easiest way to manage your passwords and accounts.</p>
-        <button class="btn btn-light btn-lg mt-3" onclick="showSection('createPHAccount')">Create PasswordHaven account</button>
-        <button class="btn btn-light btn-lg mt-3" onclick="showSection('login')">Login</button>
+        <button class="btn btn-light btn-lg mt-3" data-bs-toggle="modal" data-bs-target="#createAccountModal">Create Account</button>
+        <button class="btn btn-light btn-lg mt-3" data-bs-toggle="modal" data-bs-target="#loginModal">Login</button>
     </div>
 </section>
 
@@ -84,40 +84,50 @@
                 </div>
 </section>
 
-<!-- create passwordHaven account section-->
-<section id= "createPHAccount" class = "section container mt-5">
-    <h2 class="text-center">Add a new account</h2>
-    <form>
-        <div class="mb-3">
-            <label for="accountEmail" class="form-label">Account email</label>
-            <input type="email" class="form-control" id="accountEmail" placeholder="Enter your email address:"></input>
+<!-- create passwordHaven account modal pop up-->
+<div class="modal fade" id="createPHAccountModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createPHAccountModalLabel">Create PasswordHaven account</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <label>Email:</label>
+                <input type="email" id="signUpEmail" class="form-control">
+                <label>Password:</label>
+                <input type="password" id="signUpPassword" class="form-control">
+                <p id="signUpMsg" class="mt-2 text-danger"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="handleSignUp()"> Create PasswordHaven Account</button>
+            </div>
         </div>
-        <div class="mb-3">
-            <label for="accountPassword" class="form-label">Account password</label>
-            <input type="password" class="form-control" id="accountPassword" placeholder="Enter your password:"></input>
-        </div>
-        <button onclick="whenAccountSaved()"> Save Account</button>
-        <p id="saveAccount"></p>
-    </form>
-</section>
+    </div>
+</div>
 
-<!-- login form -->
-<section id = "login" class = "section container mt-5">
-    <h2 class="text-center">Log into PasswordHaven</h2>
-    <form>
-        <div class="mb-3">
-            <label for="accountEmail" class="form-label">Account email</label>
-            <input type="email" class="form-control" id="accountEmail" placeholder="Enter your email address:"></input>
-        </div>
-        <div class="mb-3">
-            <label for="accountPassword" class="form-label">Account password</label>
-            <input type="password" class="form-control" id="accountPassword" placeholder="Enter your password:"></input>
-        </div>
-        <button onclick="whenLogin()"> Login</button>
-        <p id="saveAccount"></p>
-    </form>
-</section>
 
+<!-- login form pop up modal-->
+<div class="modal fade" id="loginModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="loginModalLabel">Login to PasswordHaven</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <label>Email:</label>
+                <input type="email" id="loginEmail" class="form-control">
+                <label>Password:</label>
+                <input type="password" id="loginPassword" class="form-control">
+                <p id="loginMsg" class="mt-2 text-danger"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-success" onclick="handleLogin()">Login</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- function to show the relevant section when needed, so all sections don't get displayed automatically-->
 <script>
@@ -134,6 +144,51 @@
         }else {
             console.error("Couldn't find section:", selectedSection);
         }
+    }
+    //method which handles the user signing up to password haven
+    function handleSignUp(){
+        let email = document.getElementById('signUpEmail').value;
+        let password = document.getElementById('signUpPassword').value;
+
+        if (email === '' || password === ''){
+            document.getElementById('signUpMsg').innerHTML = 'Please fill out all the details!';
+            return;
+        }
+
+        let success = user.saveUser(email, password);
+        if(success){
+            alert("Your account was created succesfully!");
+            document.getElementById('signUpEmail').value = "";
+            document.getElementById('signUpPassword').value = "";
+            bootstrap.Modal.getInstance(document.getElementById('createPHAccountModal')).hidePopover();
+        }else{
+            document.getElementById('signUpMsg').innerHTML = 'An account already exists!';
+        }
+    }
+
+    //function that deals with user logging into password haven
+    function handleLogin(){
+        let email = document.getElementById('loginEmail').value;
+        let password = document.getElementById('loginPassword').value;
+
+        if(User.login(email, password)){
+            localStorage.setItem("loggedIn", "true");
+            alert('Successful login!');
+            bootstrap.Modal.getInstance(document.getElementById('loginModal')).hidePopover();
+        }else{
+            document.getElementById("loginMsg").textContent = "Invalid details entered!";
+        }
+    }
+
+    //method that checks whether the suer has logged into PH before they choose to see accounts.
+    //ensures security
+    function checkLoginBeforeViewAccounts(){
+        if(localStorage.getItem("loggedIn") !== "true"){
+            alert("You must login to PasswordHaven first!");
+            showSection("home");
+            return;
+        }
+        showSection("viewAccounts");
     }
 
     class User {
