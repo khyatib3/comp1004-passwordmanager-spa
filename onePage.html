@@ -18,6 +18,7 @@
     <div class="container">
         <a class="navbar-brand" href="#" onclick="showSection('home')">PasswordHaven</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
@@ -35,7 +36,7 @@
     <div class="container">
         <h1 class="display-4">Secure Your Passwords with PasswordHaven</h1>
         <p class="lead">The safest and easiest way to manage your passwords and accounts.</p>
-        <button class="btn btn-light btn-lg mt-3" data-bs-toggle="modal" data-bs-target="#createAccountModal">Create Account</button>
+        <button class="btn btn-light btn-lg mt-3" data-bs-toggle="modal" data-bs-target="#createPHAccountModal">Create Account</button>
         <button class="btn btn-light btn-lg mt-3" data-bs-toggle="modal" data-bs-target="#loginModal">Login</button>
     </div>
 </section>
@@ -129,11 +130,12 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"></script>
 <!-- function to show the relevant section when needed, so all sections don't get displayed automatically-->
 <script>
     function showSection(sectionId){
         //hiding all the sections
-        document.querySelectorAll('.section').for(section =>{
+        document.querySelectorAll('.section').forEach(section =>{
             section.classList.remove('active');
         })
 
@@ -142,7 +144,7 @@
         if(selectedSection){
             selectedSection.classList.add('active');
         }else {
-            console.error("Couldn't find section:", selectedSection);
+            console.error("Couldn't find section:", sectionId);
         }
     }
     //method which handles the user signing up to password haven
@@ -160,7 +162,10 @@
             alert("Your account was created succesfully!");
             document.getElementById('signUpEmail').value = "";
             document.getElementById('signUpPassword').value = "";
-            bootstrap.Modal.getInstance(document.getElementById('createPHAccountModal')).hidePopover();
+            let modal = bootstrap.Modal(document.getElementById('loginModal'));
+            if(modal){
+                modal.close();
+            }
         }else{
             document.getElementById('signUpMsg').innerHTML = 'An account already exists!';
         }
@@ -174,7 +179,10 @@
         if(User.login(email, password)){
             localStorage.setItem("loggedIn", "true");
             alert('Successful login!');
-            bootstrap.Modal.getInstance(document.getElementById('loginModal')).hidePopover();
+            let modal = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
+            if(modal){
+                modal.close();
+            }
         }else{
             document.getElementById("loginMsg").textContent = "Invalid details entered!";
         }
@@ -248,18 +256,36 @@
     }
 
     class PasswordManager {
-        constructor() {
-            this.accounts = [];
+        static saveAccount(site, username, password) {
+            let accounts = JSON.parse(localStorage.geetItem("accounts")) || [];
+            accounts.push({site, username, password: btoa(password)});
+            localStorage.setItem("accounts", JSON.stringify(accounts));
         }
 
-        addAccount(account) {
-            this.accounts.push(account);
-            console.log(`Added: ${account.siteName}`);
+        //function to retrieve the accounts from localStorage
+        static getAccounts() {
+            return JSON.parse(localStorage.getItem("accounts")) || [];
         }
 
-        viewAccounts() {
-            return this.accounts;
+        function saveNewAccount(){
+            let site = document.getElementById('siteName').value;
+            let email = document.getElementById('email').value;
+            let password = document.getElementById('password').value;
+
+            PasswordManager.saveAccount(site, email, password);
+            alert("Account saved successfully!");
         }
+
+        function displayAccounts() {
+            let accounts = PasswordManager.getAccounts();
+            let accountList = document.getElementById("accountList");
+
+            accountList.innerHTML = "";
+            accounts.forEach(account => {
+                accountList.innerHTML += `<div>${account.site} - ${atob(account.password)}</div>`;
+            });
+        }
+
     }
 
     class PasswordStrengthValidator {
@@ -280,16 +306,6 @@
         }
     }
 
-    // Testing: Creating a User & Adding an Account
-    let user = new User("testUser", "test@example.com", "securePass123!");
-    user.register();
-
-    let pm = new PasswordManager();
-    let newAccount = new Account("GitHub", "https://github.com", "testUser", "superSecurePass!");
-    pm.addAccount(newAccount);
-
-    console.log("Stored Accounts:", pm.viewAccounts());
-    }
 </script>
 </body>
 </html>
