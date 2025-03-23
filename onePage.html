@@ -17,8 +17,7 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
         <a class="navbar-brand" href="#" onclick="showSection('home')">PasswordHaven</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
@@ -83,6 +82,7 @@
                         </div>
                     </div>
                 </div>
+            </div>
 </section>
 
 <!-- create passwordHaven account modal pop up-->
@@ -147,46 +147,7 @@
             console.error("Couldn't find section:", sectionId);
         }
     }
-    //method which handles the user signing up to password haven
-    function handleSignUp(){
-        let email = document.getElementById('signUpEmail').value;
-        let password = document.getElementById('signUpPassword').value;
 
-        if (email === '' || password === ''){
-            document.getElementById('signUpMsg').innerHTML = 'Please fill out all the details!';
-            return;
-        }
-
-        let success = user.saveUser(email, password);
-        if(success){
-            alert("Your account was created succesfully!");
-            document.getElementById('signUpEmail').value = "";
-            document.getElementById('signUpPassword').value = "";
-            let modal = bootstrap.Modal(document.getElementById('loginModal'));
-            if(modal){
-                modal.close();
-            }
-        }else{
-            document.getElementById('signUpMsg').innerHTML = 'An account already exists!';
-        }
-    }
-
-    //function that deals with user logging into password haven
-    function handleLogin(){
-        let email = document.getElementById('loginEmail').value;
-        let password = document.getElementById('loginPassword').value;
-
-        if(User.login(email, password)){
-            localStorage.setItem("loggedIn", "true");
-            alert('Successful login!');
-            let modal = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
-            if(modal){
-                modal.close();
-            }
-        }else{
-            document.getElementById("loginMsg").textContent = "Invalid details entered!";
-        }
-    }
 
     //method that checks whether the suer has logged into PH before they choose to see accounts.
     //ensures security
@@ -232,10 +193,52 @@
 
         static login(email, inputPassword) {
             let storedUser = User.getUser();
-            if(!storedUser){
+            if (!storedUser) {
                 return false;
+            }
+            return storedUser.email === email && storedUser.password === btoa(inputPassword);
         }
-            return storedUser.email === email && storedUser.password === btoa(password);
+
+        //method which handles the user signing up to password haven
+        handleSignUp() {
+            let email = document.getElementById('signUpEmail').value;
+            let password = document.getElementById('signUpPassword').value;
+
+            if (email === '' || password === '') {
+                document.getElementById('signUpMsg').innerHTML = 'Please fill out all the details!';
+                return;
+            }
+
+            let success = user.saveUser(email, password);
+            if (success) {
+                alert("Your account was created succesfully!");
+                document.getElementById('signUpEmail').value = "";
+                document.getElementById('signUpPassword').value = "";
+                let modal = bootstrap.Modal(document.getElementById('loginModal'));
+                if (modal) {
+                    modal.close();
+                }
+            } else {
+                document.getElementById('signUpMsg').innerHTML = 'An account already exists!';
+            }
+        }
+
+        //function that deals with user logging into password haven
+        handleLogin() {
+            let email = document.getElementById('loginEmail').value;
+            let password = document.getElementById('loginPassword').value;
+
+            if (User.login(email, password)) {
+                localStorage.setItem("loggedIn", "true");
+                alert('Successful login!');
+                let modal = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
+                if (modal) {
+                    modal.close();
+                }
+            } else {
+                document.getElementById("loginMsg").textContent = "Invalid details entered!";
+            }
+        }
     }
 
     class Account{
@@ -246,12 +249,29 @@
             this.password = this.encryptPassword(password);
         }
 
-        encryptPassword(password) {
-            return btoa(password); // Encrypt password (for simplicity, replace with real encryption)
-        }
+        async encryptPassword(password) {
+            //first generate a random salt
+            const salt = crypto.getRandomValues(new Uint8Array(16));
 
-        decryptPassword() {
-            return atob(this.password);
+            //converting the Uint8Array into a normal javascript array
+            //and converting each byte into a hexadecimal string, joined together
+            //this way the salt becomes readable to humans
+            const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, '0').join(''));
+
+            //prepending the alt to the password
+            const saltedPassword = saltHex + password;
+
+            //encoding the salted password to a Uint8Array
+            const encoder = new TextEncoder();
+            const data = encoder.encode(saltedPassword);
+
+            //hash the salted password using SHA-256 encryption
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0').join(''));
+
+            //store the salt and the hash
+            return {salt : saltHex, hash: hashHex};
         }
     }
 
@@ -273,7 +293,7 @@
             let password = document.getElementById('password').value;
 
             PasswordManager.saveAccount(site, email, password);
-            alert("Account saved successfully!");
+
         }
 
         function displayAccounts() {
