@@ -48,6 +48,7 @@
         <div class = "col-4">Accounts</div>
         <div class = "col-4">Date Added</div>
         <div class = "col-4">Credentials</div>
+
     </div>
     <!-- accounts list vertical-->
     <div class="row">
@@ -60,6 +61,7 @@
                 </div>
             </div>
         </div>
+    </div>
 
         <div class="row">
             <div class="col-12 mb-3">
@@ -71,6 +73,7 @@
                     </div>
                 </div>
             </div>
+        </div>
 
             <div class="row">
                 <div class="col-12 mb-3">
@@ -101,7 +104,24 @@
                 <p id="signUpMsg" class="mt-2 text-danger"></p>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-primary" onclick="handleSignUp()"> Create PasswordHaven Account</button>
+                <button class="btn btn-primary" onclick="User.handleSignUp()"> Create PasswordHaven Account</button>
+                <button class="btn btn-light btn-lg" data-bs-toggle="modal" data-bs-target="#generatePasswordModal" onclick="PasswordGenerator.showGeneratedPassword()">Generate Password</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- generate password modal -->
+<div class="modal fade" id="generatePasswordModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class ="modal-title" id="generatePasswordModalLabel">Generated Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <label>Here is your randomly generated password. Pleasy copy it:</label>
+                <label></label>
             </div>
         </div>
     </div>
@@ -124,13 +144,13 @@
                 <p id="loginMsg" class="mt-2 text-danger"></p>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-success" onclick="handleLogin()">Login</button>
+                <button class="btn btn-success" onclick="User.handleLogin()">Login</button>
             </div>
         </div>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 <!-- function to show the relevant section when needed, so all sections don't get displayed automatically-->
 <script>
     function showSection(sectionId){
@@ -148,7 +168,6 @@
         }
     }
 
-
     //method that checks whether the suer has logged into PH before they choose to see accounts.
     //ensures security
     function checkLoginBeforeViewAccounts(){
@@ -161,22 +180,20 @@
     }
 
     class User {
-        constructor(username, email, password) {
-            this.email = email;
-            this.password = this.encryptPassword(); // Store hashed password
+        constructor(username, password) {
+            this.username = username;
+            this.password = password; // Store hashed password
         }
 
-        encryptPassword(password) {
-            return btoa(password); // Simple Base64 encoding (Use a better hash in production)
-        }
-
-        static saveUser(email, password) {
-            if (localStorage.getItem("user")) {
+        //adding user to local storage
+          static saveUser(username, password) {
+            let a = localStorage.getItem("user");
+            if (a !== null) {
                 alert("An account already exists. Please login!")
                 return false;
             }
 
-            let newUser = new User(email, password); //initiating an instance of the user
+            let newUser = new User(username, password); //initiating an instance of the user
             localStorage.setItem("user", JSON.stringify(newUser));// adding the user to local storage
             return true;
         }
@@ -187,69 +204,94 @@
             return userInfo ? JSON.parse(userInfo) : null;
         }
 
-        register() {
-            console.log(`User Registered: ${this.username}`);
-        }
 
-        static login(email, inputPassword) {
+        static login(username, inputPassword) {
             let storedUser = User.getUser();
-            if (!storedUser) {
+            if (storedUser == null) {
                 return false;
             }
-            return storedUser.email === email && storedUser.password === btoa(inputPassword);
+            return storedUser.username === username && storedUser.password === inputPassword;
         }
 
         //method which handles the user signing up to password haven
-        handleSignUp() {
-            let email = document.getElementById('signUpEmail').value;
+        static handleSignUp() {
+            //retrieving the email and password used in the fields
+            let username = document.getElementById('signUpEmail').value;
             let password = document.getElementById('signUpPassword').value;
+            let signUpMsg = document.getElementById('signUpMsg');
 
-            if (email === '' || password === '') {
-                document.getElementById('signUpMsg').innerHTML = 'Please fill out all the details!';
+            //in the case that the user doesn't fill in all the fields
+            if (username === '' || password === '') {
+                signUpMsg.innerText = '⚠️ Please fill out all the details!';
+                signUpMsg.classList.remove('text-success');
+                signUpMsg.classList.add('text-danger');
                 return;
             }
 
-            let success = user.saveUser(email, password);
+            let success = User.saveUser(username, password);
+
             if (success) {
-                alert("Your account was created succesfully!");
+                //changing the sign-up message to notify the user
+                signUpMsg.innerText = 'Your account was created successfully! Please login now!';
+                signUpMsg.classList.remove('text-danger');
+                signUpMsg.classList.add('text-success');
+
+                //clearing the input fields after successful creation
                 document.getElementById('signUpEmail').value = "";
                 document.getElementById('signUpPassword').value = "";
-                let modal = bootstrap.Modal(document.getElementById('loginModal'));
-                if (modal) {
-                    modal.close();
-                }
+
+                //closing the modal afterward
+                setTimeout(()=>{
+                    let signUpModal = bootstrap.Modal(document.getElementById('createPHAccountModal'));
+                    if (signUpModal) {
+                        signUpModal.hide();
+                    }
+                }, 1000); //close after 1 second
+
             } else {
-                document.getElementById('signUpMsg').innerHTML = 'An account already exists!';
+                signUpMsg.innerText = '⚠️ Your account with us already exists! Please login.';
+                signUpMsg.classList.remove('text-success');
+                signUpMsg.classList.add('text-danger');
             }
+
         }
 
         //function that deals with user logging into password haven
-        handleLogin() {
+        static handleLogin() {
             let email = document.getElementById('loginEmail').value;
             let password = document.getElementById('loginPassword').value;
+            let loginMsg = document.getElementById('loginMsg');
 
             if (User.login(email, password)) {
                 localStorage.setItem("loggedIn", "true");
-                alert('Successful login!');
-                let modal = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
-                if (modal) {
-                    modal.close();
-                }
+
+                loginMsg.innerHTML = "Successful Login!";
+                loginMsg.classList.remove('text-danger');
+                loginMsg.classList.add('text-success');
+
+                //closing the modal afterward
+                setTimeout(()=>{
+                    let loginModal = bootstrap.Modal(document.getElementById('createPHAccountModal'));
+                    if (loginModal) {
+                        loginModal.hide();
+                    }
+                }, 1000); //close after 1 second
             } else {
-                document.getElementById("loginMsg").textContent = "Invalid details entered!";
+                loginMsg.innerHTML = " ❌ Invalid details entered!";
             }
         }
     }
 
     class Account{
-        constructor(siteName, url, username, password) {
+        constructor(siteName, url, username, password, dateAdded) {
             this.siteName = siteName;
             this.url = url;
             this.username = username;
             this.password = this.encryptPassword(password);
+            this.dateAdded = dateAdded;
         }
 
-        async encryptPassword(password) {
+        static async encryptPassword(password) {
             //first generate a random salt
             const salt = crypto.getRandomValues(new Uint8Array(16));
 
@@ -273,6 +315,11 @@
             //store the salt and the hash
             return {salt : saltHex, hash: hashHex};
         }
+
+        static async decryptPassword(password){
+
+        }
+
     }
 
     class PasswordManager {
@@ -287,7 +334,7 @@
             return JSON.parse(localStorage.getItem("accounts")) || [];
         }
 
-        function saveNewAccount(){
+        saveNewAccount(){
             let site = document.getElementById('siteName').value;
             let email = document.getElementById('email').value;
             let password = document.getElementById('password').value;
@@ -296,15 +343,6 @@
 
         }
 
-        function displayAccounts() {
-            let accounts = PasswordManager.getAccounts();
-            let accountList = document.getElementById("accountList");
-
-            accountList.innerHTML = "";
-            accounts.forEach(account => {
-                accountList.innerHTML += `<div>${account.site} - ${atob(account.password)}</div>`;
-            });
-        }
 
     }
 
@@ -316,13 +354,18 @@
     }
 
     class PasswordGenerator {
-        static generate() {
+        static generatePassword() {
             const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
             let password = "";
             for (let i = 0; i < 12; i++) {
                 password += chars.charAt(Math.floor(Math.random() * chars.length));
             }
             return password;
+        }
+
+        static showGeneratedPassword(){
+            let generatedPassword = PasswordManager.generatePassword();
+            document.getElementById('generatedPasswordText').innerText = generatedPassword.toString();
         }
     }
 
