@@ -25,16 +25,26 @@ async function hash(value){
     const data = encoder.encode(value);
     const hashedValue = await crypto.subtle.digest('SHA-256', data);
 
-    //then convert to a hexadecimal string
-    return Array.from(new Uint8Array(hashedValue)).map(b => b.toString(16).padStart(2, '0'));
+
+    let hashedStringValue = Array.from(new Uint8Array(hashedValue))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+
+    //to test
+    console.log(hashedStringValue);
+
+    //return
+    return hashedStringValue;
 }
 
 
 //method that checks whether the suer has logged into PH before they choose to see accounts.
 //ensures security
-function checkLoginBeforeViewAccounts(sectionId){
-    if(localStorage.getItem("loggedIn") !== "true"){
+function checkUserLoggedIn(sectionId){
+    let userLoggedIn = localStorage.getItem("loggedIn");
+    if(userLoggedIn !== "true"){
         alert("You must login to PasswordHaven first!");
+        //only show them home section so they either sign up or log in
         showSection("home");
         return;
     }
@@ -43,7 +53,7 @@ function checkLoginBeforeViewAccounts(sectionId){
 
 function readFromLocalStorage(readItem){
     return JSON.parse(localStorage.getItem(readItem.toString()));
-    //decryptPasword()
+    //decryptPassword()
 }
 
 function writeToLocalStorage(key, value){
@@ -58,7 +68,7 @@ class User {
     }
 
     //adding user to local storage
-    static saveUser(username, password) {
+    static async saveUser(username, password) {
         userIDHash = hash(username);
         let hashedFromLocalStorage = readFromLocalStorage(userIDHash);
         if (hashedFromLocalStorage !== null) {
@@ -71,8 +81,8 @@ class User {
             let newUser = new User(userIDHash, hashedPassword);
 
             // adding the user to local storage
-            localStorage.setItem(userIDHash, JSON.stringify(newUser));
-
+            writeToLocalStorage(JSON.stringify(newUser));
+            
             //creating the master key by hashing a combination of username and password
             masterKey = hash(username + password);
             return true;
@@ -87,8 +97,8 @@ class User {
         return userInfo ? JSON.parse(userInfo) : null;
     }
 
-
-    static login(username, inputPassword) {
+//checking if login details match entered details
+    static async login(username, inputPassword) {
         userIDHash = hash(username);
         let hashedPasswordFromLocalStorage = readFromLocalStorage(userIDHash);
         if (hashedPasswordFromLocalStorage == null) {
@@ -96,9 +106,9 @@ class User {
         }else{
             let computedHashedPassword = hash(inputPassword);
             if (computedHashedPassword == hashedPasswordFromLocalStorage) {
-                return true;
-            } else
                 masterKey = hash(username + inputPassword);
+                return true;
+            }
         }
     }
 
@@ -129,13 +139,13 @@ class User {
             document.getElementById('signUpEmail').value = "";
             document.getElementById('signUpPassword').value = "";
 
-            //closing the modal afterward
-            setTimeout(()=>{
-                let signUpModal = bootstrap.Modal(document.getElementById('createPHAccountModal'));
-                if (signUpModal) {
-                    signUpModal.hide();
-                }
-            }, 1000); //close after 1 second
+            // //closing the modal afterward
+            // setTimeout(()=>{
+            //     let signUpModal = new bootstrap.Modal(document.getElementById('createPHAccountModal'));
+            //     if (signUpModal) {
+            //         signUpModal.hide();
+            //     }
+            // }, 1000); //close after 1 second
 
         } else {
             signUpMsg.innerText = '⚠️ Your account with us already exists! Please login.';
@@ -151,20 +161,21 @@ class User {
         let password = document.getElementById('loginPassword').value;
         let loginMsg = document.getElementById('loginMsg');
 
-        if (User.login(email, password)) {
+
+        let detailsMatch = User.login(email, password);
+        if (detailsMatch) {
             localStorage.setItem("loggedIn", "true");
 
             loginMsg.innerHTML = "Successful Login!";
             loginMsg.classList.remove('text-danger');
             loginMsg.classList.add('text-success');
-
-            //closing the modal afterward
-            setTimeout(()=>{
-                let loginModal = bootstrap.Modal(document.getElementById('createPHAccountModal'));
-                if (loginModal) {
-                    loginModal.hide();
-                }
-            }, 1000); //close after 1 second
+            // //closing the modal afterward
+            // setTimeout(()=>{
+            //     let loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+            //     if (loginModal) {
+            //         loginModal.hide();
+            //     }
+            // }, 1000); //close after 1 second
         } else {
             loginMsg.innerHTML = " ❌ Invalid details entered!";
         }
@@ -276,6 +287,7 @@ class Account{
     static uint8ArrayToText(uint8Array) {
         return new TextEncoder().encode(uint8Array);
     }
+
     async generateKey(){
         return await crypto.subtle.generateKey(
             algorithm,

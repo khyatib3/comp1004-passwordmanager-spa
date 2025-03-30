@@ -28,8 +28,8 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('home')">Home</a></li>
-                <li class="nav-item"><a class="nav-link" href="#" onclick="checkLoginBeforeViewAccounts()">View Accounts</a></li>
-                <li class="nav-item"><a class="nav-link" href="#" onclick="checkLoginBeforeViewAccounts()">Add Account</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" onclick="checkUserLoggedIn('viewAccounts')">View Accounts</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" onclick="checkUserLoggedIn('accountAdd')">Add Account</a></li>
             </ul>
         </div>
     </div>
@@ -91,7 +91,7 @@
 </section>
 
 <!-- account adding description section -->
-<section id="accountAdd" class="section active text-center text-black align-items-center mt-3" style="background: #4290e3; padding-top: 5rem;">
+<section id="accountAdd" class="section text-center text-black align-items-center mt-3" style="background: #4290e3; padding-top: 5rem;">
     <div class="container">
         <h3 class="display-4">Add a saved login.</h3>
         <p class="lead">Save your account credentials for <strong> quick and secure </strong> access, by <mark> clicking the button below to add a new login account </mark> into PasswordHaven.</p>
@@ -122,7 +122,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="loginModalLabel">Login to PasswordHaven</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" onclick="checkUserLoggedIn('homeSectionPostLogin')"></button>
             </div>
             <div class="modal-body">
                 <label>Email:</label>
@@ -137,6 +137,8 @@
         </div>
     </div>
 </div>
+
+<!-- TODO create a home section of id="homeSectionPostLogin" where the home section displays something other than signup and login buttons. -->
 
 <!-- View accounts section-->
 <section id="viewAccounts" class = "section container mt-5">
