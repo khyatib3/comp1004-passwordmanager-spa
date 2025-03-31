@@ -206,6 +206,8 @@ class PasswordManager {
         let site = document.getElementById('siteName').value;
         let email = document.getElementById('email').value;
         let password = document.getElementById('password').value;
+        let confirmPassword = document.getElementById('confirmPassword').value;
+        let dateOfCreation = document.getElementById('enteredDate').value;
         let accountAddMsg = document.getElementById('accountAddMsg');
 
         //checking if that account already exists
@@ -216,16 +218,115 @@ class PasswordManager {
             accountAddMsg.classList.remove('text-success');
             accountAddMsg.classList.add('text-danger');
         } else{
+            if(password === confirmPassword){
+                    passwordStrengthMsg.innerText = "Good! This is a strong password to use.";
+                    passwordStrengthMsg.classList.remove("text-danger");
+                    passwordStrengthMsg.classList.add("text-success");
 
-            PasswordManager.saveAccount(site, email, password);
-            accountAddMsg.innerText = "Your account has been saved successfully!";
-            accountAddMsg.classList.remove('text-danger');
-            accountAddMsg.classList.add('text-success');
+                    PasswordManager.saveAccount(site, email, password);
+                    accountAddMsg.innerText = "Your account has been saved successfully!";
+                    accountAddMsg.classList.remove('text-danger');
+                    accountAddMsg.classList.add('text-success');
+                    showSection('accountSuccessfulAddMsg');
+                }else{
+                    passwordStrengthMsg.innerText = "Hmm. This password isn't quite secure, please try our password generator or review our guidelines on how to create a strong password.";
+                    passwordStrengthMsg.classList.remove('text-warning');
+                }
+
+
         }
     }
 
 }
+function displayPasswordStrength(password) {
+    password = document.getElementById("enteredPassword").value;
+    let indicator = document.getElementById("passwordStrengthIndicator");
+    let strengthBar = document.getElementById("passwordStrengthBar");
+    let passwordStrength = calculatePasswordStrength(password);
 
+    let width = 0;
+    let colour = "red";
+    if(passwordStrength === "Weak"){
+        width = 30;
+        colour = "red";
+        indicator.innerText = "You should make it longer and add more numbers, special characters and capitals!";
+        indicator.classList.add("text-danger");
+    } else if (passwordStrength === "Medium"){
+        width = 60;
+        colour = "orange";
+        indicator.innerText = "Try adding more characters, and add a few numbers!";
+        indicator.classList.remove("text-danger");
+        indicator.classList.add("text-warning");
+    } else if (passwordStrength === "Strong"){
+        width = 100;
+        colour = "green";
+        indicator.innerText = "Perfect! This is a strong password to use.";
+        indicator.classList.remove("text-warning");
+        indicator.classList.add("text-success");
+    }
+
+    //applying the styles
+    strengthBar.style.width = width + "%";
+    strengthBar.style.backgroundColor = colour;
+
+}
+
+function calculatePasswordStrength(password){
+    //creating a strength 'score'
+    let strengthScore = 0;
+
+    //checking length of password
+    if(password.length ===0){ // if they typed nothing
+        strengthScore = 0;
+    }
+    if(password.length <=7){
+        strengthScore++;
+    }
+    if(password.length >= 12){
+        strengthScore += 2;
+    }
+
+    //checking for uppercase characters
+    let hasUpperCase;
+    if (/[A-Z]/.test(password)) {
+        hasUpperCase = 1;
+    } else {
+        hasUpperCase = 0;
+    }
+
+    //checking for lowercase characters
+    let hasLowerCase;
+    if (/[a-z]/.test(password)) {
+        hasLowerCase = 1;
+    } else {
+        hasLowerCase = 0;
+    }
+
+    //checking for numbers
+    let hasNumbers;
+    if (/[0-9]/.test(password)) {
+        hasNumbers = 1;
+    } else {
+        hasNumbers = 0;
+    }
+
+    //checking for special chars
+    let hasSpecialCharacters;
+    if (/[!"£$%^&*()_+-={}[]:@~#<>?]/.test(password)) {
+        hasSpecialCharacters = 1;
+    } else {
+        hasSpecialCharacters = 0;
+    }
+
+    strengthScore = strengthScore + hasSpecialCharacters + hasNumbers + hasLowerCase + hasUpperCase;
+    if(strengthScore <= 1){
+        return "Weak";
+    } else if (strengthScore >= 1 && strengthScore <= 5){
+        return "Medium"
+    } else if (strengthScore > 5){
+        return "Strong";
+    }
+}
 // Account class below
 class Account{
     constructor(siteName, url, username, password, dateAdded) {
@@ -311,12 +412,7 @@ class Account{
 
 }
 
-class PasswordStrengthValidator {
-    static checkStrength(password) {
-        const strongRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-        return strongRegex.test(password) ? "Strong" : "Weak";
-    }
-}
+
 
 class PasswordGenerator {
     static generatePassword() {

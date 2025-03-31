@@ -29,9 +29,13 @@ body {
 
 .section.active{
     display: block;
-}
-.modal{
     color: aliceblue;
     font-family: 'Garamond', serif;
     height: calc(100vh - 100px);
+}
+
+.text-success-center {
+    text-align: center;
+    color: limegreen;
+    font-weight: bold;
 }

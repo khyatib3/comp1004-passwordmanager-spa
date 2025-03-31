@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="stylesheet" type="text/css" href="styles.css"/>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PasswordHaven - Single Page Application</title>
@@ -68,8 +69,17 @@
     </div>
 </div>
 
-<!-- add an account form modal section -->
-<section id="addAccountModal" class = "section container mt-3">
+<!-- account adding description section -->
+<section id="accountAdd" class="section text-center text-black align-items-center mt-3" style="background: #4290e3; padding-top: 5rem;">
+    <div class="container">
+        <h3 class="display-4">Add a saved login.</h3>
+        <p class="lead">Save your account credentials for <strong> quick and secure </strong> access, by <mark> clicking the button below to add a new login account </mark> into PasswordHaven.</p>
+        <button class="btn btn-light btn-lg mt-3" data-bs-toggle="modal" data-bs-target="#addAccountModal" onclick="showSection('a')">Add your account!</button>
+    </div>
+</section>
+
+<!-- add an account form section -->
+<section id="addAccountForm" class = "section container mt-3">
     <h2 class = "text-center mb-4">New account form</h2>
     <p class="lead text-center mb-5">Please fill all the forms below to add your account .</p>
     <div class = "container mt-3">
@@ -78,7 +88,11 @@
         <label>Email/username:</label>
         <input type="username" id="enteredUsername" class="form-control">
         <label>Password:</label>
-        <input type="password" id="enteredPassword" class="form-control">
+        <input type="password" id="enteredPassword" class="form-control" oninput="displayPasswordStrength(this)">
+        <div class="progress mt-2">
+            <div id="passwordStrengthBar" class="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+        <small id="passwordStrengthIndicator" class="form-text text-muted"></small>
         <label>Confirm Password:</label>
         <input type="password" id="confirmPassword" class="form-control">
         <label>Date of account creation:</label>
@@ -90,13 +104,12 @@
     </div> <!-- TODO change this section to mimic home page section without blue background and have button for add account modal!-->
 </section>
 
-<!-- account adding description section -->
-<section id="accountAdd" class="section text-center text-black align-items-center mt-3" style="background: #4290e3; padding-top: 5rem;">
-    <div class="container">
-        <h3 class="display-4">Add a saved login.</h3>
-        <p class="lead">Save your account credentials for <strong> quick and secure </strong> access, by <mark> clicking the button below to add a new login account </mark> into PasswordHaven.</p>
-        <button class="btn btn-light btn-lg mt-3" data-bs-toggle="modal" data-bs-target="#addAccountModal">Add your account!</button>
-    </div>
+<!-- successful account addition section to be shown after addAccount-->
+<section id="accountSuccessfulAddMsg" class="section container mt-3">
+    <h2 class = "text-success-center mb-4">Account successfully added!</h2>
+    <p class="lead text-center mb-5">Thank you for using PasswordHaven! This account was successfully added to the password Manager.</p>
+    <p class="lead text-center mb-5">You can view, edit, or delete it when you click "View Accounts" in the navigation bar above.</p>
+    <button class="btn btn-primary btn-lg mt-3" onclick="showSection('homeSectionPostLogin')">Take me Home.</button>
 </section>
 
 <!-- generate password modal -->
