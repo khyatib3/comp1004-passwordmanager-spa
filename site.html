@@ -28,7 +28,7 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('home')">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('learnMore')">Learn More</a></li>
                 <li class="nav-item"><a class="nav-link" href="#" onclick="checkUserLoggedIn('viewAccounts')">View Accounts</a></li>
                 <li class="nav-item"><a class="nav-link" href="#" onclick="checkUserLoggedIn('accountAdd')">Add Account</a></li>
             </ul>
@@ -36,7 +36,7 @@
     </div>
 </nav>
 
-<!-- center section text-->
+<!-- home center section text-->
 <section id="home" class="section active text-center text-white align-items-center mt-3" style="background: #4A90E2; padding-top: 5rem;">
     <div class="container">
         <h1 class="display-4">Secure Your Passwords with PasswordHaven</h1>
@@ -74,7 +74,7 @@
     <div class="container">
         <h3 class="display-4">Add a saved login.</h3>
         <p class="lead">Save your account credentials for <strong> quick and secure </strong> access, by <mark> clicking the button below to add a new login account </mark> into PasswordHaven.</p>
-        <button class="btn btn-light btn-lg mt-3" data-bs-toggle="modal" data-bs-target="#addAccountModal" onclick="showSection('a')">Add your account!</button>
+        <button class="btn btn-light btn-lg mt-3" data-bs-toggle="modal" data-bs-target="addAccountForm" onclick="showSection('addAccountForm')">Add your account!</button>
     </div>
 </section>
 
@@ -88,13 +88,14 @@
         <label>Email/username:</label>
         <input type="username" id="enteredUsername" class="form-control">
         <label>Password:</label>
-        <input type="password" id="enteredPassword" class="form-control" oninput="displayPasswordStrength(this)">
+        <input type="password" id="enteredPassword" class="form-control" oninput="displayPasswordStrength()">
         <div class="progress mt-2">
             <div id="passwordStrengthBar" class="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
         </div>
         <small id="passwordStrengthIndicator" class="form-text text-muted"></small>
         <label>Confirm Password:</label>
         <input type="password" id="confirmPassword" class="form-control">
+        <small id="confirmPasswordMsg" class="form-text text-muted"></small>
         <label>Date of account creation:</label>
         <input type="date" id="enteredDate" class="form-control">
         <p id="accountAddMsg" class="mt-2 text-danger"></p>
@@ -151,7 +152,21 @@
     </div>
 </div>
 
-<!-- TODO create a home section of id="homeSectionPostLogin" where the home section displays something other than signup and login buttons. -->
+<!-- TODO add Learn More tab in nav bar which displays the below. change id to 'learnMore' add a statement to direct user to learn more from pre login home page. post login should display greeting and direct them to available options/ display some placeholder  -->
+<!-- POST LOGIN home section -->
+<section id="learnMore" class="section active text-center text-white align-items-center mt-3" style="background: #4A90E2; padding-top: 5rem;">
+    <div class="container">
+        <h1 class="display-4"> <strong>Welcome!</strong> </h1>
+        <h3 class="lead">What does PasswordHaven provide you?</h3>
+        <ul>
+            <li>PasswordHaven allows you to securely store and manage your login credentials for different websites, giving you full control to view, edit, and delete them whenever needed.</li>
+            <li>If you need a strong password, PasswordHaven can instantly generate a random, highly secure password to help protect your accounts from breaches.</li>
+            <li>To keep your accounts safe, PasswordHaven analyzes your passwords and provides helpful insights on their strength, ensuring you use the most secure options.</li>
+            <li>Your data is protected with advanced AES-GCM encryption, using a master key derived from a securely hashed master username and password, keeping your credentials safe from unauthorized access.</li>
+            <li>With PasswordHaven, you can conveniently store all your logins in one secure place, making it easy to organize and access your credentials whenever you need them.</li>
+        </ul>
+    </div>
+</section>
 
 <!-- View accounts section-->
 <section id="viewAccounts" class = "section container mt-5">

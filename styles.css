@@ -29,13 +29,22 @@ body {
 
 .section.active{
     display: block;
-    color: aliceblue;
+    color: midnightblue;
     font-family: 'Garamond', serif;
     height: calc(100vh - 100px);
 }
 
-.text-success-center {
-    text-align: center;
+.text-success{
     color: limegreen;
+    font-weight: bold;
+}
+
+.text-warning{
+    color: orange;
+    font-weight: bold;
+}
+
+.text-danger{
+    color: crimson;
     font-weight: bold;
 }
