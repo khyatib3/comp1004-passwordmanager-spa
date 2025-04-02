@@ -132,27 +132,30 @@ function calculatePasswordStrength(password) {
 }
 
 //live message display for confirm password input against password input
-document.getElementById("confirmPassword").addEventListener("input", function () {
-    let password = document.getElementById("enteredPassword").value;
-    let confirmPassword = this.value;
-    let confirmMsg = document.getElementById("confirmPasswordMsg");
+document.addEventListener("DOMContentLoaded", function() {
+    document.getElementById("confirmPassword").addEventListener("input", function () {
+        let password = document.getElementById("enteredPassword").value;
+        let confirmPassword = this.value;
+        let confirmMsg = document.getElementById("confirmPasswordMsg");
 
-    if (confirmPassword === "") {
-        confirmMsg.innerText = "No password detected!";
-        confirmMsg.classList.add("text-warning");
-    } else if (confirmPassword === password) {
-        confirmMsg.innerText = "Passwords match!";
-        confirmMsg.classList.remove("text-danger");
-        confirmMsg.classList.remove("text-warning");
-        confirmMsg.classList.add("text-success");
-    } else {
-        confirmMsg.innerText = "Passwords do not match! Please try again!";
-        confirmMsg.classList.remove("text-success");
-        confirmMsg.classList.remove("text-warning");
-        confirmMsg.classList.add("text-danger");
-    }
+        if (confirmPassword === "") {
+            confirmMsg.innerText = "No password detected!";
+            confirmMsg.classList.add("text-warning");
+        } else if (confirmPassword === password) {
+            confirmMsg.innerText = "Passwords match!";
+            confirmMsg.classList.remove("text-danger");
+            confirmMsg.classList.remove("text-warning");
+            confirmMsg.classList.add("text-success");
+        } else {
+            confirmMsg.innerText = "Passwords do not match! Please try again!";
+            confirmMsg.classList.remove("text-success");
+            confirmMsg.classList.remove("text-warning");
+            confirmMsg.classList.add("text-danger");
+        }
 
+    });
 });
+
 
 class User {
     constructor(username, password) {
