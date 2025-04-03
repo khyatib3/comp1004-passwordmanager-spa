@@ -2,12 +2,14 @@
 let userIDHash = "";
 let masterKey = "";
 
+
 //function to show the relevant section when needed, so all sections don't get displayed automatically
 function showSection(sectionId) {
     //hiding all the sections
     document.querySelectorAll('.section').forEach(section => {
         section.classList.remove('active');
     })
+
 
     //then showing the selected section
     let selectedSection = document.getElementById(sectionId);
@@ -122,9 +124,9 @@ function calculatePasswordStrength(password) {
 
     strengthScore = strengthScore + hasSpecialCharacters + hasNumbers + hasLowerCase + hasUpperCase;
 
-    if (strengthScore <= 3) {
+    if (strengthScore <= 2) {
         return "Weak";
-    } else if (strengthScore >= 3 && strengthScore <= 5) {
+    } else if (strengthScore > 2 && strengthScore <= 4) {
         return "Medium"
     } else {
         return "Strong";
@@ -285,13 +287,6 @@ const algorithm = {
 
 
 class PasswordManager {
-    static saveAccount(site, username, password) {
-        let accounts = JSON.parse(localStorage.geetItem("accounts")) || [];
-        accounts.push({site, username, password: btoa(password)});
-        localStorage.setItem("accounts", JSON.stringify(accounts));
-
-    }
-
     //function to retrieve the accounts from localStorage
     static getAccounts() {
         return JSON.parse(localStorage.getItem("accounts")) || [];
@@ -300,10 +295,10 @@ class PasswordManager {
     //adding account to local storage method
     static addAccount() {
         let site = document.getElementById('siteName').value;
-        let email = document.getElementById('email').value;
-        let password = document.getElementById('password').value;
+        let url = document.getElementById('url').value;
+        let username = document.getElementById('enteredUsername').value;
+        let password = document.getElementById('enteredPassword').value;
         let confirmPassword = document.getElementById('confirmPassword').value;
-        let dateOfCreation = document.getElementById('enteredDate').value;
         let accountAddMsg = document.getElementById('accountAddMsg');
 
         //check that both the passwords match before proceeding
@@ -322,12 +317,51 @@ class PasswordManager {
             accountAddMsg.classList.remove('text-success');
             accountAddMsg.classList.add('text-danger');
         } else {
-            PasswordManager.saveAccount(site, email, password);
+            //PasswordManager.saveAccount(site, email, password);
             accountAddMsg.innerText = "✅ Your account has been saved successfully!";
             accountAddMsg.classList.remove('text-danger');
             accountAddMsg.classList.add('text-success');
             showSection('accountSuccessfulAddMsg');
         }
+    }
+
+    static saveSiteAccountDetails(siteName, url, username, password, dateOfCreation){
+        let account = new Account(siteName, username, password, dateOfCreation);
+        const accountMap = new Map();
+        accountMap.set(siteName, account);
+        writeToLocalStorage("accountList",accountMap);
+
+    }
+
+
+    static displayAccounts(){
+        let accounts = PasswordManager.getAccounts();
+        let accountsContainer = document.getElementById('accountsList');
+
+        accountsContainer.innerHTML = '';
+
+        if(accounts.length === 0){
+            accountsContainer.innerHTML = "<p class='text-center mt-3'>No accounts stored yet.</p>";
+            return;
+        }
+
+        accounts.forEach(account => {
+            let row = document.getElementById("div");
+            row.classList.add("row", "align-items-center");
+
+            row.innerHTML = `
+            <div class="col-4 fw-bold">${account.site}</div>
+            <div class="col-4 text-center">${account.dateAdded}</div>
+            <div class="col-4 text-center">
+                <button class="btn btn-primary btn-sm" onclick="viewCredentials('${account.site}', '${account.username}', '${account.password}')">View Credentials</button>
+            </div>
+        `;
+            accountsContainer.appendChild(row);
+        })
+    }
+
+    static viewCredentials(site, email, password) {
+
     }
 }
 
@@ -337,37 +371,12 @@ class Account {
         this.siteName = siteName;
         this.url = url;
         this.username = username;
-        this.password = this.encryptPassword(password);
+        this.password = this.aesEncryptPassword(password);
         this.dateAdded = dateAdded;
     }
 
-    static async hashing(password) {
-        //TODO find different way that doesn't use random values but
-        //first generate a random salt
-        const salt = crypto.getRandomValues(new Uint8Array(16));
-
-        //converting the Uint8Array into a normal javascript array
-        //and converting each byte into a hexadecimal string, joined together
-        //this way the salt becomes readable to humans
-        const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, '0').join(''));
-
-        //prepending the salt to the password
-        const saltedPassword = saltHex + password;
-
-        //encoding the salted password to a Uint8Array
-        const encoder = new TextEncoder();
-        const data = encoder.encode(saltedPassword);
-
-        //hash the salted password using SHA-256 encryption
-        const encryptedPassword = await crypto.subtle.digest('SHA-256', data);
-        const hashArray = Array.from(new Uint8Array(encryptedPassword));
-        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0').join(''));
-
-        //store the salt and the hash
-        return {salt: saltHex, hash: hashHex};
-    }
-
-    static async aesEncryptPassword(password, key) {
+    //aes gcm encryption
+    async aesEncryptPassword(password, key) {
         const iv = crypto.getRandomValues(new Uint8Array(12));
         const encodedData = this.textToUint8Array(password);
 
