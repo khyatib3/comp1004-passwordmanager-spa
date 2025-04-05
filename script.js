@@ -50,6 +50,7 @@ function checkUserLoggedIn(sectionId) {
         showSection("home");
         return;
     }
+
     showSection(sectionId);
 }
 
@@ -203,7 +204,7 @@ class User {
             return false;
         } else {
             let computedHashedPassword = hash(inputPassword);
-            if (computedHashedPassword == hashedPasswordFromLocalStorage) {
+            if (computedHashedPassword === hashedPasswordFromLocalStorage) {
                 masterKey = hash(username + inputPassword);
                 return true;
             }
@@ -288,26 +289,18 @@ const algorithm = {
 
 class PasswordManager {
     //function to retrieve the accounts from localStorage
-    static getAccounts() {
-        return JSON.parse(localStorage.getItem("accounts")) || [];
+    static getAccounts(accounts) {
+        return readFromLocalStorage(accounts);
     }
 
     //adding account to local storage method
     static addAccount() {
-        let site = document.getElementById('siteName').value;
+        let site = document.getElementById('nickname').value;
         let url = document.getElementById('url').value;
-        let username = document.getElementById('enteredUsername').value;
-        let password = document.getElementById('enteredPassword').value;
+        let username = document.getElementById('username').value;
+        let password = document.getElementById('password').value;
         let confirmPassword = document.getElementById('confirmPassword').value;
         let accountAddMsg = document.getElementById('accountAddMsg');
-
-        //check that both the passwords match before proceeding
-        if (password !== confirmPassword) {
-            accountAddMsg.innerText = "❌Passwords do not match! Please check again!";
-            accountAddMsg.classList.remove("text-success");
-            accountAddMsg.classList.add("text-danger");
-            return;
-        }
 
         //checking if that account already exists
         let accounts = JSON.parse(localStorage.getItem("accounts")) || [];
@@ -317,16 +310,15 @@ class PasswordManager {
             accountAddMsg.classList.remove('text-success');
             accountAddMsg.classList.add('text-danger');
         } else {
-            //PasswordManager.saveAccount(site, email, password);
-            accountAddMsg.innerText = "✅ Your account has been saved successfully!";
-            accountAddMsg.classList.remove('text-danger');
-            accountAddMsg.classList.add('text-success');
-            showSection('accountSuccessfulAddMsg');
+            PasswordManager.saveSiteAccountDetails(site,url,username,password)
+            checkUserLoggedIn('accountSuccessfulAddMsg');
         }
     }
 
     static saveSiteAccountDetails(siteName, url, username, password, dateOfCreation){
-        let account = new Account(siteName, username, password, dateOfCreation);
+        //encrypting the password first before storing it
+        const encryptedPassword = Account.aesEncryptPassword(password);
+        let account = new Account(siteName, username, encryptedPassword, dateOfCreation);
         const accountMap = new Map();
         accountMap.set(siteName, account);
         writeToLocalStorage("accountList",accountMap);
@@ -334,35 +326,73 @@ class PasswordManager {
     }
 
 
-    static displayAccounts(){
-        let accounts = PasswordManager.getAccounts();
+    static async displayAccounts(){
+        let savedAccounts = PasswordManager.getAccounts();
         let accountsContainer = document.getElementById('accountsList');
 
         accountsContainer.innerHTML = '';
 
-        if(accounts.length === 0){
+        //if there are no saved accounts since user may have yet to add
+        if(savedAccounts.length === 0){
             accountsContainer.innerHTML = "<p class='text-center mt-3'>No accounts stored yet.</p>";
             return;
         }
 
-        accounts.forEach(account => {
-            let row = document.getElementById("div");
-            row.classList.add("row", "align-items-center");
+        //iterating through the saved accounts
+        savedAccounts.forEach((account, index)=> {
+            const row = document.createElement('div');
+            row.className = 'row align-items-center mb-2 row value';
+            row.id = `accountRow${index}`;
+            row.setAttribute('data-index', index);
 
+            //creating the IDs for UI elements
+            const accountRecordId = index + 1;
+            const siteId = `s${accountRecordId}`;
+            const dateAddedId = `d${accountRecordId}`;
+            const usernameId = `u${accountRecordId}`;
+            const passwordId = `p${accountRecordId}`;
+            const userEyeIconId = `uIcon${accountRecordId}`;
+            const passwordEyeIconId = `pIcon${accountRecordId}`;
+            const editBtnId = `e${accountRecordId}`;
+            const deleteBtn = `del${accountRecordId}`;
+
+            //setting the elements with the account record details
             row.innerHTML = `
-            <div class="col-4 fw-bold">${account.site}</div>
-            <div class="col-4 text-center">${account.dateAdded}</div>
-            <div class="col-4 text-center">
-                <button class="btn btn-primary btn-sm" onclick="viewCredentials('${account.site}', '${account.username}', '${account.password}')">View Credentials</button>
-            </div>
-        `;
-            accountsContainer.appendChild(row);
+            <div class="d-flex justify-content-between align-items-center row${accountRecordId}">
+                <div class="account-info">
+                    <div> <span id="a${accountRecordId}"> ${account.siteName}</span> </div>
+                    <div> <span id="${dateAddedId}"> ${account.dateAdded}</span></div>
+                    <div> <span id="${usernameId}">Username</span> </div>
+                   <div> <span id="${passwordId}"> ${passwordEyeIconId}</span> </div>
+                </div>
+            </div>`
+
         })
+
+        accountsContainer.appendChild(row)
     }
 
     static viewCredentials(site, email, password) {
 
     }
+
+    static deleteAccount(){
+
+    }
+
+}
+
+function arrayBufferToBase64(arrayBuffer) {
+    return btoa(String.fromCharCode(new Uint8Array(arrayBuffer)));
+}
+
+function base64ToArrayBuffer(base64Data){
+    const binaryString = atob(base64Data);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = bytes.charCodeAt(i);
+    }
+    return bytes.buffer;
 }
 
 // Account class below
@@ -371,56 +401,76 @@ class Account {
         this.siteName = siteName;
         this.url = url;
         this.username = username;
-        this.password = this.aesEncryptPassword(password);
+        this.password = password;
         this.dateAdded = dateAdded;
     }
 
     //aes gcm encryption
-    async aesEncryptPassword(password, key) {
-        const iv = crypto.getRandomValues(new Uint8Array(12));
-        const encodedData = this.textToUint8Array(password);
+    static async aesEncryptPassword(password) {
+        try{
+            //importing my masterKey as a cryptoKey
+            const cryptoKey = await crypto.subtle.importKey(
+                "raw",
+                masterKey,
+                {name: 'AES-GCM'},
+                false,
+                ['encrypt', 'decrypt']
+            );
 
-        const encryptedData = await crypto.subtle.encrypt(
-            {name: "AES-GCM", iv},
-            key,
-            encodedData
-        );
+            //using an initialisation vector without random values
+            const initialisationVector = new Uint8Array(12);
 
-        return {
-            iv: Array.from(iv), // convert to array to store
-            encrypted: Array.from(new Uint8Array(encryptedData))
-        };
+            //encrypting
+            const encryptedData = await crypto.subtle.encrypt(
+                {
+                    name: 'AES-GCM',
+                    iv: initialisationVector,
+                    tagLength: 128
+                },
+                cryptoKey,
+                new TextEncoder().encode(password)
+            );
+            return{
+                iv: arrayBufferToBase64(initialisationVector.buffer),
+                cipherText:arrayBufferToBase64(encryptedData)
+            };
+        } catch(e){
+            console.error("Encryption failed:", e);
+            throw e;
+        }
     }
 
-    //this is to convert a string into a Uint8Array
-    static textToUint8Array(text) {
-        return new TextEncoder().encode(text);
-    }
 
-    //to convert from Uint8Array to string
-    static uint8ArrayToText(uint8Array) {
-        return new TextEncoder().encode(uint8Array);
-    }
+    static async decryptPassword(encryptedPassword) {
+      try{
+          const cryptoKey = await crypto.subtle.importKey(
+              "raw",
+              masterKey,
+              {name: 'AES-GCM'},
+              false,
+              ['encrypt', 'decrypt']
+          );
 
-    async generateKey() {
-        return await crypto.subtle.generateKey(
-            algorithm,
-            true,
-            ["encrypt", "decrypt"]
-        );
-    }
+          //converting from base 64
+          const initialisationVector = base64ToArrayBuffer(encryptedPassword.iv);
+          const cipherText = base64ToArrayBuffer(encryptedPassword.cipherText);
 
-    static async decryptPassword(encryptedPassword, key) {
-        const {iv, encrypted} = encryptedPassword;
-        const encryptedArray = new Uint8Array(encrypted);
-        const ivArray = new Uint8Array(iv);
+          //decrypting
+          const decryptedPassword = await crypto.subtle.decrypt(
+              {
+                  name: 'AES-GCM',
+                  iv: initialisationVector,
+                  tagLength: 128
+              },
+              cryptoKey,
+              cipherText
+          );
 
-        const decryptedPassword = await crypto.subtle.decrypt(
-            {name: "AES-GCM", iv: iv, ivArray},
-            key,
-            encryptedArray
-        );
-        return this.uint8ArrayToText(new Uint8Array(decryptedPassword));
+          //return the password
+          return new TextDecoder().decode(decryptedPassword);
+      }catch(e){
+          console.error("Decryption failed:", e);
+      }
     }
 
 }

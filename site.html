@@ -22,14 +22,14 @@
 <!-- Navigation bar -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
-        <a class="navbar-brand" href="#" onclick="showSection('home')">PasswordHaven</a>
+        <a class="navbar-brand" href="#" onclick="checkUserLoggedIn('home')">PasswordHaven</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('learnMore')">Learn More</a></li>
-                <li class="nav-item"><a class="nav-link" href="#" onclick="checkUserLoggedIn('viewAccounts')">View Accounts</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" onclick="PasswordManager.displayAccounts()">View Accounts</a></li>
                 <li class="nav-item"><a class="nav-link" href="#" onclick="checkUserLoggedIn('accountAdd')">Add Account</a></li>
             </ul>
         </div>
@@ -84,13 +84,13 @@
     <p class="lead text-center mb-5">Please fill all the forms below to add your account .</p>
     <div class = "container mt-3">
         <label>Site name:</label>
-        <input type="text" id="siteName" class="form-control">
+        <input type="text" id="nickname" class="form-control">
         <label>Website URL:</label>
-        <input type="url" id="enteredWebsite" class="form-control">
+        <input type="url" id="url" class="form-control">
         <label>Email/username:</label>
-        <input type="username" id="enteredUsername" class="form-control">
+        <input type="username" id="username" class="form-control">
         <label>Password:</label>
-        <input type="password" id="enteredPassword" class="form-control" oninput="displayPasswordStrength()">
+        <input type="password" id="password" class="form-control" oninput="displayPasswordStrength()">
         <div class="progress mt-2">
             <div id="passwordStrengthBar" class="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
         </div>
@@ -104,6 +104,7 @@
         <button class="btn btn-primary" onclick="PasswordManager.addAccount()">Add account</button>
     </div> <!-- TODO change this section to mimic home page section without blue background and have button for add account modal!-->
 </section>
+
 
 <!-- successful account addition section to be shown after addAccount-->
 <section id="accountSuccessfulAddMsg" class="section container mt-3">
@@ -176,16 +177,27 @@
     </div>
 </section>
 
-<!--delete accounts section-->
 
-<!-- View accounts section-->
+<!--view accounts section-->
 <section id="viewAccounts" class = "section container mt-5">
     <h2 class="text-center mb-4">Your Stored Accounts</h2>
     <!-- headers for the table-->
-    <div class = "row text-center fw bold border-bottom pb-2">
-        <div class = "col-4">Accounts</div>
-        <div class = "col-4">Date Added</div>
-        <div class = "col-4">Credentials</div>
+    <div class = "row text-center fw bold border-bottom pb-2 row-header">
+        <div class = "col-2">Account</div>
+        <div class = "col-2">Date Added</div>
+        <div class = "col-2">User Id</div>
+        <div class = "col-2">Password</div>
+        <div class = "col-2">Edit</div>
+        <div class = "col-2">Delete</div>
+
+    </div>
+    <div id="1" class = "row text-center fw bold border-bottom pb-2 row-value">
+        <div id="a-1" class = "col-2">Account</div>
+        <div id="d-1" class = "col-2">Date Added</div>
+        <div id="u-1" class = "col-2">User Id</div>
+        <div id="p-1" class = "col-2">Password</div>
+        <div id="e-1" class = "col-2">Edit</div>
+        <div id="del-1" class = "col-2">Delete</div>
 
     </div>
     <div id="accountsList"></div>
