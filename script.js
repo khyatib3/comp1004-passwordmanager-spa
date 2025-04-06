@@ -56,11 +56,10 @@ function checkUserLoggedIn(sectionId) {
 
 function readFromLocalStorage(readItem) {
     return JSON.parse(localStorage.getItem(readItem.toString()));
-    //decryptPassword()
+
 }
 
 function writeToLocalStorage(key, value) {
-    //encryptPassword()
     localStorage.setItem(value, JSON.stringify(value));
 }
 
@@ -281,16 +280,10 @@ class User {
     }
 }
 
-const algorithm = {
-    name: "AES-GCM",
-    length: 256
-};
-
-
 class PasswordManager {
     //function to retrieve the accounts from localStorage
-    static getAccounts(accounts) {
-        return readFromLocalStorage(accounts);
+    static getAccounts() {
+        return JSON.parse(localStorage.getItem("accountList")) || [];
     }
 
     //adding account to local storage method
@@ -315,20 +308,36 @@ class PasswordManager {
         }
     }
 
-    static saveSiteAccountDetails(siteName, url, username, password, dateOfCreation){
+    static saveSiteAccountDetails(siteName, url, username, password){
         //encrypting the password first before storing it
         const encryptedPassword = Account.aesEncryptPassword(password);
-        let account = new Account(siteName, username, encryptedPassword, dateOfCreation);
-        const accountMap = new Map();
-        accountMap.set(siteName, account);
-        writeToLocalStorage("accountList",accountMap);
+
+        //getting local date as d/m/yyyy
+        let date = new Date();
+        const dateString = date.getDate() + "-" + (date.getMonth() + 1) + "-" + date.getFullYear();
+
+        //creating instance of new account
+        let account = new Account(siteName, username, encryptedPassword, dateString);
+
+        let accountList = JSON.parse(localStorage.getItem("accountList")) || [];
+
+        //adding account to list
+        accountList.push(account);
+        localStorage.setItem("accountList", JSON.stringify(accountList));
+
+        // const accountMap = new Map();
+        // accountMap.set(siteName, account);
+        // writeToLocalStorage("accountList",accountMap);
 
     }
 
 
     static async displayAccounts(){
+        document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+        document.getElementById('viewAccounts').classList.add('active');
+
         let savedAccounts = PasswordManager.getAccounts();
-        let accountsContainer = document.getElementById('accountsList');
+        const accountsContainer = document.getElementById('accountsList');
 
         accountsContainer.innerHTML = '';
 
@@ -339,47 +348,108 @@ class PasswordManager {
         }
 
         //iterating through the saved accounts
-        savedAccounts.forEach((account, index)=> {
+        savedAccounts.forEach((account, index) => {
             const row = document.createElement('div');
-            row.className = 'row align-items-center mb-2 row value';
+            row.className = 'row align-items-center mb-2';
             row.id = `accountRow${index}`;
             row.setAttribute('data-index', index);
 
-            //creating the IDs for UI elements
             const accountRecordId = index + 1;
             const siteId = `s${accountRecordId}`;
-            const dateAddedId = `d${accountRecordId}`;
             const usernameId = `u${accountRecordId}`;
             const passwordId = `p${accountRecordId}`;
+            const editBtnId = `e${accountRecordId}`;
+            const deleteBtnId = `del${accountRecordId}`;
             const userEyeIconId = `uIcon${accountRecordId}`;
             const passwordEyeIconId = `pIcon${accountRecordId}`;
-            const editBtnId = `e${accountRecordId}`;
-            const deleteBtn = `del${accountRecordId}`;
 
-            //setting the elements with the account record details
             row.innerHTML = `
-            <div class="d-flex justify-content-between align-items-center row${accountRecordId}">
-                <div class="account-info">
-                    <div> <span id="a${accountRecordId}"> ${account.siteName}</span> </div>
-                    <div> <span id="${dateAddedId}"> ${account.dateAdded}</span></div>
-                    <div> <span id="${usernameId}">Username</span> </div>
-                   <div> <span id="${passwordId}"> ${passwordEyeIconId}</span> </div>
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="account-info">
+                <div><span id="${siteId}">${account.siteName}</span></div>
+                <div>
+                    <span>Username:</span>
+                    <span id="${usernameId}" data-editable="false">${account.username}</span>
+                    <button id="${userEyeIconId}" class="btn btn-sm btn-outline-secondary">👁️</button>
                 </div>
-            </div>`
+                <div>
+                    <span>Password:</span>
+                    <span id="${passwordId}" data-editable="false">********</span>
+                    <button id="${passwordEyeIconId}" class="btn btn-sm btn-outline-secondary">👁️</button>
+                </div>
+            </div>
+            <div class="account-actions">
+                <button id="${editBtnId}" class="btn btn-sm btn-outline-primary"> Edit</button>
+                <button id="${deleteBtnId}" class="btn btn-sm btn-outline-danger">Delete</button>
+            </div>
+        </div>`;
 
-        })
+            // creating eye icon functionality for username visibility
+            row.querySelector(`#${userEyeIconId}`).addEventListener('click', () => {
+                const usernameSpan = document.getElementById(usernameId);
+                const parsedUsername = JSON.parse(account.username);
+                usernameSpan.innerText = usernameSpan.dataset.editable === 'true' ? parsedUsername: '**hidden**';
+                usernameSpan.dataset.editable = usernameSpan.dataset.editable === 'true' ? 'false' : 'true';
+            });
 
-        accountsContainer.appendChild(row)
+            //creating eye icon functionality for password visibility
+            row.querySelector(`#${passwordEyeIconId}`).addEventListener('click', async () => {
+                const passwordSpan = document.getElementById(passwordId);
+                const decrypted = JSON.parse(await Account.decryptPassword(account.password));
+                passwordSpan.innerText = passwordSpan.dataset.editable === 'true' ? decrypted : '********';
+                passwordSpan.dataset.editable = passwordSpan.dataset.editable === 'true' ? 'false' : 'true';
+            });
+
+            //adding edit button/save button functionality
+            row.querySelector(`#${editBtnId}`).addEventListener('click', async () => {
+                const editButton = row.querySelector(`#${editBtnId}`);
+                const usernameSpan = document.getElementById(usernameId);
+                const passwordSpan = document.getElementById(passwordId);
+
+                //checking what state the button is in, edit or save
+                if (editButton.innerText === 'Edit') {
+                    // make username and password fields editable
+                    usernameSpan.innerHTML = `<input type="text" value="${account.username}" />`;
+                    passwordSpan.innerHTML = `<input type="text" value="${account.password}" />`;
+                    //changing button state to save to let users save modification
+                    editButton.innerText = 'Save';
+                } else {
+                    //button is in save state, so save changes made
+                    const newUsername = usernameSpan.querySelector('input').value;
+                    const newPassword = passwordSpan.querySelector('input').value;
+
+                    //rewriting account details
+                    account.username = newUsername;
+                    //not encrypting again here, since encryption is being called in saveSiteAccountDetails()
+                    account.password = newPassword;
+
+                    //first deleting the existing record of that account, so duplicates aren't stored
+                    savedAccounts.splice(index, 1);
+                    //then saving the updated account
+                    PasswordManager.saveSiteAccountDetails(account.siteName, account.url, account.username, account.password, account.dateAdded);
+
+                    usernameSpan.innerText = account.username;
+                    passwordSpan.innerText = '********';
+
+                    //since save button is used now, set state back to edit
+                    editButton.innerText = 'Edit';
+                }
+            });
+
+            // Delete button functionality
+            row.querySelector(`#${deleteBtnId}`).addEventListener('click', () => {
+                savedAccounts.splice(index, 1);
+                localStorage.setItem('accounts', JSON.stringify(savedAccounts));
+
+                //show the updated stored accounts again.
+                PasswordManager.displayAccounts();
+            });
+
+            //add row to container
+            accountsContainer.appendChild(row);
+
+        });
     }
-
-    static viewCredentials(site, email, password) {
-
-    }
-
-    static deleteAccount(){
-
-    }
-
 }
 
 function arrayBufferToBase64(arrayBuffer) {
