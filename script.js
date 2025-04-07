@@ -60,7 +60,7 @@ function readFromLocalStorage(readItem) {
 }
 
 function writeToLocalStorage(key, value) {
-    localStorage.setItem(value, JSON.stringify(value));
+    localStorage.setItem(key, JSON.stringify(value));
 }
 
 function displayPasswordStrength() {
@@ -316,15 +316,18 @@ class PasswordManager {
         let date = new Date();
         const dateString = date.getDate() + "-" + (date.getMonth() + 1) + "-" + date.getFullYear();
 
-        //creating instance of new account
-        let account = new Account(siteName, username, encryptedPassword, dateString);
-
         let accountList = JSON.parse(localStorage.getItem("accountList")) || [];
+
+        // Remove any existing account for the same siteName
+        accountList = accountList.filter(acc => acc.siteName !== siteName);
+
+        //creating instance of new account
+        const account = new Account(siteName, url, username, encryptedPassword, dateString);
 
         //adding account to list
         accountList.push(account);
         localStorage.setItem("accountList", JSON.stringify(accountList));
-
+        console.log("Saving account with username and password: ", username, password, encryptedPassword);
         // const accountMap = new Map();
         // accountMap.set(siteName, account);
         // writeToLocalStorage("accountList",accountMap);
@@ -349,7 +352,7 @@ class PasswordManager {
 
         //iterating through the saved accounts
         savedAccounts.forEach((account, index) => {
-            const row = document.createElement('div');
+            const row = document.createElement('tr');
             row.className = 'row align-items-center mb-2';
             row.id = `accountRow${index}`;
             row.setAttribute('data-index', index);
@@ -364,25 +367,22 @@ class PasswordManager {
             const passwordEyeIconId = `pIcon${accountRecordId}`;
 
             row.innerHTML = `
-        <div class="d-flex justify-content-between align-items-center">
-            <div class="account-info">
-                <div><span id="${siteId}">${account.siteName}</span></div>
-                <div>
-                    <span>Username:</span>
-                    <span id="${usernameId}" data-editable="false">${account.username}</span>
-                    <button id="${userEyeIconId}" class="btn btn-sm btn-outline-secondary">👁️</button>
-                </div>
-                <div>
-                    <span>Password:</span>
-                    <span id="${passwordId}" data-editable="false">********</span>
-                    <button id="${passwordEyeIconId}" class="btn btn-sm btn-outline-secondary">👁️</button>
-                </div>
-            </div>
-            <div class="account-actions">
-                <button id="${editBtnId}" class="btn btn-sm btn-outline-primary"> Edit</button>
-                <button id="${deleteBtnId}" class="btn btn-sm btn-outline-danger">Delete</button>
-            </div>
-        </div>`;
+        <td>${account.siteName}</td>
+    <td>${account.dateAdded}</td>
+    <td>
+        <span id="${usernameId}" data-editable="false">${account.username}</span>
+        <button id="${userEyeIconId}" class="btn btn-sm btn-outline-secondary">👁️</button>
+    </td>
+    <td>
+        <span id="${passwordId}" data-editable="false">********</span>
+        <button id="${passwordEyeIconId}" class="btn btn-sm btn-outline-secondary">👁️</button>
+    </td>
+    <td>
+        <button id="${editBtnId}" class="btn btn-sm btn-outline-primary">Edit</button>
+    </td>
+    <td>
+        <button id="${deleteBtnId}" class="btn btn-sm btn-outline-danger">Delete</button>
+    </td>`;
 
             // creating eye icon functionality for username visibility
             row.querySelector(`#${userEyeIconId}`).addEventListener('click', () => {
