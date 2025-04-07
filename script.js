@@ -352,8 +352,8 @@ class PasswordManager {
 
         //iterating through the saved accounts
         savedAccounts.forEach((account, index) => {
-            const row = document.createElement('tr');
-            row.className = 'row align-items-center mb-2';
+            const row = document.createElement('div');
+            row.classList.add('row', 'text-center', 'fw', 'bold', 'border-bottom', 'pb-2', 'row-value');
             row.id = `accountRow${index}`;
             row.setAttribute('data-index', index);
 
@@ -366,24 +366,140 @@ class PasswordManager {
             const userEyeIconId = `uIcon${accountRecordId}`;
             const passwordEyeIconId = `pIcon${accountRecordId}`;
 
-            row.innerHTML = `
-        <td>${account.siteName}</td>
-    <td>${account.dateAdded}</td>
-    <td>
-        <span id="${usernameId}" data-editable="false">${account.username}</span>
-        <button id="${userEyeIconId}" class="btn btn-sm btn-outline-secondary">👁️</button>
-    </td>
-    <td>
-        <span id="${passwordId}" data-editable="false">********</span>
-        <button id="${passwordEyeIconId}" class="btn btn-sm btn-outline-secondary">👁️</button>
-    </td>
-    <td>
-        <button id="${editBtnId}" class="btn btn-sm btn-outline-primary">Edit</button>
-    </td>
-    <td>
-        <button id="${deleteBtnId}" class="btn btn-sm btn-outline-danger">Delete</button>
-    </td>`;
+            const accountSiteNameDiv = document.createElement('div');
+            accountSiteNameDiv.classList.add('col-2');
+            accountSiteNameDiv.innerText = account.siteName;
+            row.appendChild(accountSiteNameDiv);
 
+            const accountDateAddedDiv = document.createElement('div');
+            accountDateAddedDiv.classList.add('col-2');
+            accountDateAddedDiv.innerText = account.dateAdded;
+            row.appendChild(accountDateAddedDiv);
+
+            const accountUserIdDiv = document.createElement('div');
+            accountUserIdDiv.classList.add('col-2');
+
+            const accountUserIdLabel = document.createElement('label');
+            accountUserIdLabel.innerText = account.username;
+            accountUserIdDiv.appendChild(accountUserIdLabel);
+
+            const usernameEyeBtn = document.createElement('button');
+            usernameEyeBtn.id = userEyeIconId;
+            usernameEyeBtn.classList.add('btn', 'btn-sm', 'btn-outline-secondary');
+            usernameEyeBtn.innerText = "👁️";
+            accountUserIdDiv.appendChild(usernameEyeBtn);
+            row.appendChild(accountUserIdDiv);
+
+            const passwordDiv = document.createElement('div');
+            passwordDiv.classList.add('col-2');
+
+            const passwordLabel = document.createElement('label');
+            Account.decryptPassword(account.password).then(decryptedPassword => {passwordLabel.innerText = decryptedPassword});
+            passwordDiv.appendChild(passwordLabel);
+
+
+            const passowrdEyeBtn = document.createElement('button');
+            passowrdEyeBtn.id = passwordEyeIconId;
+            passowrdEyeBtn.classList.add('btn', 'btn-sm', 'btn-outline-secondary');
+            passowrdEyeBtn.innerText = "👁️";
+            passwordDiv.appendChild(passowrdEyeBtn);
+            row.appendChild(passwordDiv);
+
+
+            const editBtn = document.createElement('button');
+            editBtn.classList.add('col-2');
+            editBtn.id = passwordEyeIconId;
+            editBtn.classList.add('btn', 'btn-sm', 'btn-outline-secondary');
+            editBtn.innerText = "Edit️";
+            row.appendChild(editBtn);
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.classList.add('col-2');
+            deleteBtn.id = deleteBtnId;
+            deleteBtn.classList.add('btn', 'btn-sm', 'btn-outline-secondary');
+            deleteBtn.innerText = "Delete";
+            row.appendChild(deleteBtn);
+
+
+
+//             row.innerHTML = `
+//       <tr>
+//       <td>${account.siteName}</td>
+//     <td>${account.dateAdded}</td>
+//     <td>
+//         <span id="${usernameId}" data-editable="false">${account.username}</span>
+//         <button id="${userEyeIconId}" class="btn btn-sm btn-outline-secondary">👁️</button>
+//     </td>
+//     <td>
+//         <span id="${passwordId}" data-editable="false">********</span>
+//         <button id="${passwordEyeIconId}" class="btn btn-sm btn-outline-secondary">👁️</button>
+//     </td>
+//     <td>
+//         <button id="${editBtnId}" class="btn btn-sm btn-outline-primary">Edit</button>
+//     </td>
+//     <td>
+//         <button id="${deleteBtnId}" class="btn btn-sm btn-outline-danger">Delete</button>
+//     </td>
+// </tr>`;
+
+
+
+            //
+            // //creating eye icon functionality for password visibility
+            // row.querySelector(`#${passwordEyeIconId}`).addEventListener('click', async () => {
+            //     const passwordSpan = document.getElementById(passwordId);
+            //     const decrypted = JSON.parse(await Account.decryptPassword(account.password));
+            //     passwordSpan.innerText = passwordSpan.dataset.editable === 'true' ? decrypted : '********';
+            //     passwordSpan.dataset.editable = passwordSpan.dataset.editable === 'true' ? 'false' : 'true';
+            // });
+            //
+            // //adding edit button/save button functionality
+            // row.querySelector(`#${editBtnId}`).addEventListener('click', async () => {
+            //     const editButton = row.querySelector(`#${editBtnId}`);
+            //     const usernameSpan = document.getElementById(usernameId);
+            //     const passwordSpan = document.getElementById(passwordId);
+            //
+            //     //checking what state the button is in, edit or save
+            //     if (editButton.innerText === 'Edit') {
+            //         // make username and password fields editable
+            //         usernameSpan.innerHTML = `<input type="text" value="${account.username}" />`;
+            //         passwordSpan.innerHTML = `<input type="text" value="${account.password}" />`;
+            //         //changing button state to save to let users save modification
+            //         editButton.innerText = 'Save';
+            //     } else {
+            //         //button is in save state, so save changes made
+            //         const newUsername = usernameSpan.querySelector('input').value;
+            //         const newPassword = passwordSpan.querySelector('input').value;
+            //
+            //         //rewriting account details
+            //         account.username = newUsername;
+            //         //not encrypting again here, since encryption is being called in saveSiteAccountDetails()
+            //         account.password = newPassword;
+            //
+            //         //first deleting the existing record of that account, so duplicates aren't stored
+            //         savedAccounts.splice(index, 1);
+            //         //then saving the updated account
+            //         PasswordManager.saveSiteAccountDetails(account.siteName, account.url, account.username, account.password, account.dateAdded);
+            //
+            //         usernameSpan.innerText = account.username;
+            //         passwordSpan.innerText = '********';
+            //
+            //         //since save button is used now, set state back to edit
+            //         editButton.innerText = 'Edit';
+            //     }
+            // });
+            //
+            // // Delete button functionality
+            // row.querySelector(`#${deleteBtnId}`).addEventListener('click', () => {
+            //     savedAccounts.splice(index, 1);
+            //     localStorage.setItem('accounts', JSON.stringify(savedAccounts));
+            //
+            //     //show the updated stored accounts again.
+            //     PasswordManager.displayAccounts();
+            // });
+
+            //add row to container
+            accountsContainer.appendChild(row);
             // creating eye icon functionality for username visibility
             row.querySelector(`#${userEyeIconId}`).addEventListener('click', () => {
                 const usernameSpan = document.getElementById(usernameId);
@@ -391,63 +507,6 @@ class PasswordManager {
                 usernameSpan.innerText = usernameSpan.dataset.editable === 'true' ? parsedUsername: '**hidden**';
                 usernameSpan.dataset.editable = usernameSpan.dataset.editable === 'true' ? 'false' : 'true';
             });
-
-            //creating eye icon functionality for password visibility
-            row.querySelector(`#${passwordEyeIconId}`).addEventListener('click', async () => {
-                const passwordSpan = document.getElementById(passwordId);
-                const decrypted = JSON.parse(await Account.decryptPassword(account.password));
-                passwordSpan.innerText = passwordSpan.dataset.editable === 'true' ? decrypted : '********';
-                passwordSpan.dataset.editable = passwordSpan.dataset.editable === 'true' ? 'false' : 'true';
-            });
-
-            //adding edit button/save button functionality
-            row.querySelector(`#${editBtnId}`).addEventListener('click', async () => {
-                const editButton = row.querySelector(`#${editBtnId}`);
-                const usernameSpan = document.getElementById(usernameId);
-                const passwordSpan = document.getElementById(passwordId);
-
-                //checking what state the button is in, edit or save
-                if (editButton.innerText === 'Edit') {
-                    // make username and password fields editable
-                    usernameSpan.innerHTML = `<input type="text" value="${account.username}" />`;
-                    passwordSpan.innerHTML = `<input type="text" value="${account.password}" />`;
-                    //changing button state to save to let users save modification
-                    editButton.innerText = 'Save';
-                } else {
-                    //button is in save state, so save changes made
-                    const newUsername = usernameSpan.querySelector('input').value;
-                    const newPassword = passwordSpan.querySelector('input').value;
-
-                    //rewriting account details
-                    account.username = newUsername;
-                    //not encrypting again here, since encryption is being called in saveSiteAccountDetails()
-                    account.password = newPassword;
-
-                    //first deleting the existing record of that account, so duplicates aren't stored
-                    savedAccounts.splice(index, 1);
-                    //then saving the updated account
-                    PasswordManager.saveSiteAccountDetails(account.siteName, account.url, account.username, account.password, account.dateAdded);
-
-                    usernameSpan.innerText = account.username;
-                    passwordSpan.innerText = '********';
-
-                    //since save button is used now, set state back to edit
-                    editButton.innerText = 'Edit';
-                }
-            });
-
-            // Delete button functionality
-            row.querySelector(`#${deleteBtnId}`).addEventListener('click', () => {
-                savedAccounts.splice(index, 1);
-                localStorage.setItem('accounts', JSON.stringify(savedAccounts));
-
-                //show the updated stored accounts again.
-                PasswordManager.displayAccounts();
-            });
-
-            //add row to container
-            accountsContainer.appendChild(row);
-
         });
     }
 }
@@ -478,10 +537,13 @@ class Account {
     //aes gcm encryption
     static async aesEncryptPassword(password) {
         try{
+            const encoder = new TextEncoder();
+            const masterKeyEncoded = encoder.encode(masterKey);
+            const masterKeyBuffer = await crypto.subtle.digest("SHA-256", masterKeyEncoded);
             //importing my masterKey as a cryptoKey
             const cryptoKey = await crypto.subtle.importKey(
                 "raw",
-                masterKey,
+                masterKeyBuffer,
                 {name: 'AES-GCM'},
                 false,
                 ['encrypt', 'decrypt']
@@ -495,7 +557,7 @@ class Account {
                 {
                     name: 'AES-GCM',
                     iv: initialisationVector,
-                    tagLength: 128
+                    tagLength: 256
                 },
                 cryptoKey,
                 new TextEncoder().encode(password)
@@ -513,9 +575,12 @@ class Account {
 
     static async decryptPassword(encryptedPassword) {
       try{
+          const encoder = new TextEncoder();
+          const masterKeyEncoded = encoder.encode(masterKey);
+          const masterKeyBuffer = await crypto.subtle.digest("SHA-256", masterKeyEncoded);
           const cryptoKey = await crypto.subtle.importKey(
               "raw",
-              masterKey,
+              masterKeyBuffer,
               {name: 'AES-GCM'},
               false,
               ['encrypt', 'decrypt']
@@ -530,14 +595,17 @@ class Account {
               {
                   name: 'AES-GCM',
                   iv: initialisationVector,
-                  tagLength: 128
+                  tagLength: 256
               },
               cryptoKey,
               cipherText
           );
 
           //return the password
-          return new TextDecoder().decode(decryptedPassword);
+          const v = new TextDecoder().decode(decryptedPassword);
+          console.log("decryptedPassword:", decryptedPassword, v);
+          return v;
+
       }catch(e){
           console.error("Decryption failed:", e);
       }
