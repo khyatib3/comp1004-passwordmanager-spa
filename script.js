@@ -1,7 +1,95 @@
 //global variables
 let userIDHash = "";
-let masterKey = "";
+let masterKey = null;
 
+
+//aes gcm encryption
+async function aesEncrypt(plaintext, key) {
+    //using an initialisation vector
+    const initialisationVector = crypto.getRandomValues(new Uint8Array(12));
+    const encoded = strToUint8(plaintext);
+
+    const cipherText = await crypto.subtle.encrypt(
+        {
+            name: "AES-GCM",
+            iv: initialisationVector
+        },
+        key,
+        encoded
+    );
+
+    return{
+        cipherText: new Uint8Array(cipherText),
+        iv: initialisationVector
+    };
+
+}
+
+ async function aesDecrypt(cipherText, key, initialisationVector) {
+    const plainText = await  crypto.subtle.decrypt(
+        {
+            name: "AES-GCM",
+            iv: initialisationVector
+        },
+        key,
+        cipherText
+    );
+
+    //return the password
+    return uint8ToStr(new Uint8Array(plainText));
+
+}
+//example usage below for testing and understanding purposes
+(async () =>{
+    const key = await makeMasterKey("helloWorld");
+    const message = "Hello, all!";
+    console.log("original:", message);
+
+    const { cipherText, iv} = await aesEncrypt(message, key);
+    console.log("Encrypted:", cipherText);
+    const decrypted = await aesDecrypt(cipherText,key, iv);
+    console.log("decrypted:", decrypted);
+
+})();
+
+function strToUint8(string){
+    return new TextEncoder().encode(string);
+}
+
+function uint8ToStr(array){
+    return new TextDecoder().decode(array);
+}
+
+//making masterKey to from userId+password hash
+async function makeMasterKey(myString) {
+    // const salt = crypto.getRandomValues(new Uint8Array(16));
+    const salt = new TextEncoder().encode("saltToMakeTastey");
+    const encoder = new TextEncoder();
+    const initialKey = await crypto.subtle.importKey(
+        "raw",
+        encoder.encode(myString),
+        {name: "PBKDF2"},
+        false,
+        ["deriveKey"]
+    );
+
+    //deriving key using PBKDF2
+    const finalKey = await crypto.subtle.deriveKey(
+        {
+            name: "PBKDF2",
+            salt: salt, // random salt that is stored along with cipherText
+            iterations: 100000,
+            hash: "SHA-256",
+        },
+        initialKey,
+        {
+            name: "AES-GCM", length: 256
+        },
+        true,
+        ["encrypt", "decrypt"]
+    );
+    return finalKey;
+}
 
 //function to show the relevant section when needed, so all sections don't get displayed automatically
 function showSection(sectionId) {
@@ -56,15 +144,31 @@ function checkUserLoggedIn(sectionId) {
 
 function readFromLocalStorage(readItem) {
     return JSON.parse(localStorage.getItem(readItem.toString()));
-
 }
 
 function writeToLocalStorage(key, value) {
     localStorage.setItem(key, JSON.stringify(value));
 }
 
+function protectedReadFromLocalStorage(key) {
+    let sensitiveData = JSON.parse(localStorage.getItem(key));
+    let decryptedValue = null;
+    aesDecrypt(sensitiveData.cipherText, masterKey, sensitiveData.iv).then(value=>{
+        decryptedValue = value;
+    });
+    return decryptedValue;
+}
+
+function protectedWriteToLocalStorage(key, value) {
+    aesEncrypt(value,masterKey).then((encValue, iv) => {
+        let sensitiveData = {encValue,iv};
+        localStorage.setItem(key, JSON.stringify(sensitiveData));
+    });
+
+}
+
 function displayPasswordStrength() {
-    let password = document.getElementById("enteredPassword").value;
+    let password = document.getElementById("password").value;
     let indicator = document.getElementById("passwordStrengthIndicator");
     let strengthBar = document.getElementById("passwordStrengthBar");
     let passwordStrength = calculatePasswordStrength(password);
@@ -134,9 +238,9 @@ function calculatePasswordStrength(password) {
 }
 
 //live message display for confirm password input against password input
-document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", function() {
     document.getElementById("confirmPassword").addEventListener("input", function () {
-        let password = document.getElementById("enteredPassword").value;
+        let password = document.getElementById("password").value;
         let confirmPassword = this.value;
         let confirmMsg = document.getElementById("confirmPasswordMsg");
 
@@ -167,26 +271,21 @@ class User {
 
     //adding user to local storage
     static async saveUser(username, password) {
-        userIDHash = hash(username);
+        userIDHash = await hash(username);
         let hashedFromLocalStorage = readFromLocalStorage(userIDHash);
         if (hashedFromLocalStorage !== null) {
             alert("An account already exists. Please login!")
             return false;
         } else {
-            let hashedPassword = hash(password);
-
-            //initiating an instance of the user
-            let newUser = new User(userIDHash, hashedPassword);
+            let hashedPassword = await hash(password);
 
             // adding the user to local storage
-            writeToLocalStorage(JSON.stringify(newUser));
+            writeToLocalStorage(userIDHash, hashedPassword);
 
             //creating the master key by hashing a combination of username and password
-            masterKey = hash(username + password);
+            masterKey = await makeMasterKey(hash(username + password));
             return true;
         }
-
-
     }
 
     //retrieving the user's details from local storage
@@ -197,14 +296,14 @@ class User {
 
 //checking if login details match entered details
     static async login(username, inputPassword) {
-        userIDHash = hash(username);
+        userIDHash = await hash(username);
         let hashedPasswordFromLocalStorage = readFromLocalStorage(userIDHash);
         if (hashedPasswordFromLocalStorage == null) {
             return false;
         } else {
-            let computedHashedPassword = hash(inputPassword);
+            let computedHashedPassword = await hash(inputPassword);
             if (computedHashedPassword === hashedPasswordFromLocalStorage) {
-                masterKey = hash(username + inputPassword);
+                masterKey = await makeMasterKey(hash(username + inputPassword));
                 return true;
             }
         }
@@ -225,42 +324,41 @@ class User {
             return;
         }
 
-        let success = User.saveUser(username, password);
+        User.saveUser(username, password).then(result => {
+            if (result) {
+                //changing the sign-up message to notify the user
+                signUpMsg.innerText = '✅Your account was created successfully! Please login now!';
+                signUpMsg.classList.remove('text-danger');
+                signUpMsg.classList.add('text-success');
 
-        if (success) {
-            //changing the sign-up message to notify the user
-            signUpMsg.innerText = '✅Your account was created successfully! Please login now!';
-            signUpMsg.classList.remove('text-danger');
-            signUpMsg.classList.add('text-success');
+                //clearing the input fields after successful creation
+                document.getElementById('signUpEmail').value = "";
+                document.getElementById('signUpPassword').value = "";
 
-            //clearing the input fields after successful creation
-            document.getElementById('signUpEmail').value = "";
-            document.getElementById('signUpPassword').value = "";
+                // //closing the modal afterward
+                // setTimeout(()=>{
+                //     let signUpModal = new bootstrap.Modal(document.getElementById('createPHAccountModal'));
+                //     if (signUpModal) {
+                //         signUpModal.hide();
+                //     }
+                // }, 1000); //close after 1 second
 
-            // //closing the modal afterward
-            // setTimeout(()=>{
-            //     let signUpModal = new bootstrap.Modal(document.getElementById('createPHAccountModal'));
-            //     if (signUpModal) {
-            //         signUpModal.hide();
-            //     }
-            // }, 1000); //close after 1 second
-
-        } else {
-            signUpMsg.innerText = "⚠️ Your account with us already exists! Please login.";
-            signUpMsg.classList.remove('text-success');
-            signUpMsg.classList.add('text-danger');
-        }
-
+            } else {
+                signUpMsg.innerText = "⚠️ Your account with us already exists! Please login.";
+                signUpMsg.classList.remove('text-success');
+                signUpMsg.classList.add('text-danger');
+            }
+        });
     }
 
     //function that deals with user logging into password haven
-    static handleLogin() {
+    static async handleLogin() {
         let email = document.getElementById('loginEmail').value;
         let password = document.getElementById('loginPassword').value;
         let loginMsg = document.getElementById('loginMsg');
 
 
-        let detailsMatch = User.login(email, password);
+        let detailsMatch = await User.login(email, password);
         if (detailsMatch) {
             localStorage.setItem("loggedIn", "true");
 
@@ -283,7 +381,7 @@ class User {
 class PasswordManager {
     //function to retrieve the accounts from localStorage
     static getAccounts() {
-        return JSON.parse(localStorage.getItem("accountList")) || [];
+        return JSON.parse(localStorage.getItem(userIDHash+"-accounts")) || [];
     }
 
     //adding account to local storage method
@@ -296,7 +394,7 @@ class PasswordManager {
         let accountAddMsg = document.getElementById('accountAddMsg');
 
         //checking if that account already exists
-        let accounts = JSON.parse(localStorage.getItem("accounts")) || [];
+        let accounts = PasswordManager.getAccounts();
         let accountExists = accounts.some(account => account.site === site && account.username === username && account.password === password);
         if (accountExists) {
             accountAddMsg.innerText = "⚠️This account already exists in the password manager! You can find it in 'View Accounts'.";
@@ -310,28 +408,25 @@ class PasswordManager {
 
     static saveSiteAccountDetails(siteName, url, username, password){
         //encrypting the password first before storing it
-        const encryptedPassword = Account.aesEncryptPassword(password);
+        aesEncrypt(password, masterKey).then(encryptedPassword => {
+            //getting local date as d/m/yyyy
+            let date = new Date();
+            const dateString = date.getDate() + "-" + (date.getMonth() + 1) + "-" + date.getFullYear();
 
-        //getting local date as d/m/yyyy
-        let date = new Date();
-        const dateString = date.getDate() + "-" + (date.getMonth() + 1) + "-" + date.getFullYear();
+            //get list of accounts against user logged in.
+            let accountList = PasswordManager.getAccounts();
 
-        let accountList = JSON.parse(localStorage.getItem("accountList")) || [];
+            // Remove any existing account for the same siteName
+            accountList = accountList.filter(acc => acc.siteName !== siteName);
 
-        // Remove any existing account for the same siteName
-        accountList = accountList.filter(acc => acc.siteName !== siteName);
+            //creating instance of new account
+            const account = new Account(siteName, url, username, encryptedPassword, dateString);
 
-        //creating instance of new account
-        const account = new Account(siteName, url, username, encryptedPassword, dateString);
-
-        //adding account to list
-        accountList.push(account);
-        localStorage.setItem("accountList", JSON.stringify(accountList));
-        console.log("Saving account with username and password: ", username, password, encryptedPassword);
-        // const accountMap = new Map();
-        // accountMap.set(siteName, account);
-        // writeToLocalStorage("accountList",accountMap);
-
+            //adding account to list
+            accountList.push(account);
+            localStorage.setItem(userIDHash+"-accounts", JSON.stringify(accountList));
+            console.log("Saving account with username and password: ", username, password, encryptedPassword);
+        });
     }
 
 
@@ -394,15 +489,15 @@ class PasswordManager {
             passwordDiv.classList.add('col-2');
 
             const passwordLabel = document.createElement('label');
-            Account.decryptPassword(account.password).then(decryptedPassword => {passwordLabel.innerText = decryptedPassword});
+            aesDecrypt(account.password).then(decryptedPassword => {passwordLabel.innerText = decryptedPassword});
             passwordDiv.appendChild(passwordLabel);
 
 
-            const passowrdEyeBtn = document.createElement('button');
-            passowrdEyeBtn.id = passwordEyeIconId;
-            passowrdEyeBtn.classList.add('btn', 'btn-sm', 'btn-outline-secondary');
-            passowrdEyeBtn.innerText = "👁️";
-            passwordDiv.appendChild(passowrdEyeBtn);
+            const passwordEyeBtn = document.createElement('button');
+            passwordEyeBtn.id = passwordEyeIconId;
+            passwordEyeBtn.classList.add('btn', 'btn-sm', 'btn-outline-secondary');
+            passwordEyeBtn.innerText = "👁️";
+            passwordDiv.appendChild(passwordEyeBtn);
             row.appendChild(passwordDiv);
 
 
@@ -448,7 +543,7 @@ class PasswordManager {
             // //creating eye icon functionality for password visibility
             // row.querySelector(`#${passwordEyeIconId}`).addEventListener('click', async () => {
             //     const passwordSpan = document.getElementById(passwordId);
-            //     const decrypted = JSON.parse(await Account.decryptPassword(account.password));
+            //     const decrypted = JSON.parse(await Account.aesDecrypt(account.password));
             //     passwordSpan.innerText = passwordSpan.dataset.editable === 'true' ? decrypted : '********';
             //     passwordSpan.dataset.editable = passwordSpan.dataset.editable === 'true' ? 'false' : 'true';
             // });
@@ -511,19 +606,6 @@ class PasswordManager {
     }
 }
 
-function arrayBufferToBase64(arrayBuffer) {
-    return btoa(String.fromCharCode(new Uint8Array(arrayBuffer)));
-}
-
-function base64ToArrayBuffer(base64Data){
-    const binaryString = atob(base64Data);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = bytes.charCodeAt(i);
-    }
-    return bytes.buffer;
-}
-
 // Account class below
 class Account {
     constructor(siteName, url, username, password, dateAdded) {
@@ -533,84 +615,6 @@ class Account {
         this.password = password;
         this.dateAdded = dateAdded;
     }
-
-    //aes gcm encryption
-    static async aesEncryptPassword(password) {
-        try{
-            const encoder = new TextEncoder();
-            const masterKeyEncoded = encoder.encode(masterKey);
-            const masterKeyBuffer = await crypto.subtle.digest("SHA-256", masterKeyEncoded);
-            //importing my masterKey as a cryptoKey
-            const cryptoKey = await crypto.subtle.importKey(
-                "raw",
-                masterKeyBuffer,
-                {name: 'AES-GCM'},
-                false,
-                ['encrypt', 'decrypt']
-            );
-
-            //using an initialisation vector without random values
-            const initialisationVector = new Uint8Array(12);
-
-            //encrypting
-            const encryptedData = await crypto.subtle.encrypt(
-                {
-                    name: 'AES-GCM',
-                    iv: initialisationVector,
-                    tagLength: 256
-                },
-                cryptoKey,
-                new TextEncoder().encode(password)
-            );
-            return{
-                iv: arrayBufferToBase64(initialisationVector.buffer),
-                cipherText:arrayBufferToBase64(encryptedData)
-            };
-        } catch(e){
-            console.error("Encryption failed:", e);
-            throw e;
-        }
-    }
-
-
-    static async decryptPassword(encryptedPassword) {
-      try{
-          const encoder = new TextEncoder();
-          const masterKeyEncoded = encoder.encode(masterKey);
-          const masterKeyBuffer = await crypto.subtle.digest("SHA-256", masterKeyEncoded);
-          const cryptoKey = await crypto.subtle.importKey(
-              "raw",
-              masterKeyBuffer,
-              {name: 'AES-GCM'},
-              false,
-              ['encrypt', 'decrypt']
-          );
-
-          //converting from base 64
-          const initialisationVector = base64ToArrayBuffer(encryptedPassword.iv);
-          const cipherText = base64ToArrayBuffer(encryptedPassword.cipherText);
-
-          //decrypting
-          const decryptedPassword = await crypto.subtle.decrypt(
-              {
-                  name: 'AES-GCM',
-                  iv: initialisationVector,
-                  tagLength: 256
-              },
-              cryptoKey,
-              cipherText
-          );
-
-          //return the password
-          const v = new TextDecoder().decode(decryptedPassword);
-          console.log("decryptedPassword:", decryptedPassword, v);
-          return v;
-
-      }catch(e){
-          console.error("Decryption failed:", e);
-      }
-    }
-
 }
 
 class PasswordGenerator {
