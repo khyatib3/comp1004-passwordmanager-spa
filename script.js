@@ -25,8 +25,9 @@ async function aesEncrypt(plaintext, key) {
 
 }
 
+//aes gcm decryption
  async function aesDecrypt(cipherText, key, initialisationVector) {
-    const plainText = await  crypto.subtle.decrypt(
+    const plainText = await crypto.subtle.decrypt(
         {
             name: "AES-GCM",
             iv: initialisationVector
@@ -454,6 +455,7 @@ class PasswordManager {
 
             const accountRecordId = index + 1;
             const siteId = `s${accountRecordId}`;
+            const dateId = `d${accountRecordId}`;
             const usernameId = `u${accountRecordId}`;
             const passwordId = `p${accountRecordId}`;
             const editBtnId = `e${accountRecordId}`;
@@ -462,11 +464,13 @@ class PasswordManager {
             const passwordEyeIconId = `pIcon${accountRecordId}`;
 
             const accountSiteNameDiv = document.createElement('div');
+            accountSiteNameDiv.id = siteId;
             accountSiteNameDiv.classList.add('col-2');
             accountSiteNameDiv.innerText = account.siteName;
             row.appendChild(accountSiteNameDiv);
 
             const accountDateAddedDiv = document.createElement('div');
+            accountDateAddedDiv.id = dateId;
             accountDateAddedDiv.classList.add('col-2');
             accountDateAddedDiv.innerText = account.dateAdded;
             row.appendChild(accountDateAddedDiv);
@@ -475,7 +479,8 @@ class PasswordManager {
             accountUserIdDiv.classList.add('col-2');
 
             const accountUserIdLabel = document.createElement('label');
-            accountUserIdLabel.innerText = account.username;
+            accountUserIdLabel.id = usernameId;
+            accountUserIdLabel.innerText = "*******";
             accountUserIdDiv.appendChild(accountUserIdLabel);
 
             const usernameEyeBtn = document.createElement('button');
@@ -489,9 +494,9 @@ class PasswordManager {
             passwordDiv.classList.add('col-2');
 
             const passwordLabel = document.createElement('label');
-            aesDecrypt(account.password).then(decryptedPassword => {passwordLabel.innerText = decryptedPassword});
+            passwordLabel.id = passwordId;
+            passwordLabel.innerText = "*******";
             passwordDiv.appendChild(passwordLabel);
-
 
             const passwordEyeBtn = document.createElement('button');
             passwordEyeBtn.id = passwordEyeIconId;
@@ -500,21 +505,48 @@ class PasswordManager {
             passwordDiv.appendChild(passwordEyeBtn);
             row.appendChild(passwordDiv);
 
-
             const editBtn = document.createElement('button');
             editBtn.classList.add('col-2');
-            editBtn.id = passwordEyeIconId;
-            editBtn.classList.add('btn', 'btn-sm', 'btn-outline-secondary');
+            editBtn.id = editBtnId;
+            editBtn.classList.add('btn', 'btn-sm', 'btn-outline-primary');
             editBtn.innerText = "Edit️";
             row.appendChild(editBtn);
 
             const deleteBtn = document.createElement('button');
             deleteBtn.classList.add('col-2');
             deleteBtn.id = deleteBtnId;
-            deleteBtn.classList.add('btn', 'btn-sm', 'btn-outline-secondary');
+            deleteBtn.classList.add('btn', 'btn-sm', 'btn-outline-danger');
             deleteBtn.innerText = "Delete";
             row.appendChild(deleteBtn);
 
+            //adding eye buttons functionality
+            row.querySelector(`#${userEyeIconId}`).addEventListener('click', async () => {
+                accountUserIdLabel.innerText = accountUserIdLabel.dataset.editable === 'true' ? account.username : '*******';
+                accountUserIdLabel.dataset.editable = accountUserIdLabel.dataset.editable === 'true' ? 'false' : 'true';
+            });
+
+            row.querySelector(`#${passwordEyeIconId}`).addEventListener('click', async () => {
+                const decrypted = protectedReadFromLocalStorage(userIDHash+"-accounts");
+                passwordLabel.innerText = passwordLabel.dataset.editable === 'true' ? decrypted : '*******';
+                passwordLabel.dataset.editable = passwordLabel.dataset.editable === 'true' ? 'false' : 'true';
+            });
+
+            row.querySelector(`#${editBtnId}`).addEventListener('click', async () => {
+                if(editBtn.innerText === "Edit"){
+                    accountUserIdLabel.innerHTML = `<input type="text" value="${account.username}" />`;
+                    const decryptedVal = await aesDecrypt(account.password.cip, masterKey, account.password.iv);
+                    passwordLabel.innerHTML = `<input type="text" value="${decryptedVal}" />`;
+                    editBtn.innerText = "Save";
+                } else if (editBtn.innerText === "Save"){
+                    const newUsername = accountUserIdLabel.querySelector('input').value;
+                    const newPassword = passwordLabel.querySelector('input').value;
+
+                    //saving details
+                    account.username = newUsername;
+                    account.password = newPassword;
+                    protectedWriteToLocalStorage(userIDHash+"-accounts", account);
+                }
+            })
 
 
 //             row.innerHTML = `
@@ -595,13 +627,6 @@ class PasswordManager {
 
             //add row to container
             accountsContainer.appendChild(row);
-            // creating eye icon functionality for username visibility
-            row.querySelector(`#${userEyeIconId}`).addEventListener('click', () => {
-                const usernameSpan = document.getElementById(usernameId);
-                const parsedUsername = JSON.parse(account.username);
-                usernameSpan.innerText = usernameSpan.dataset.editable === 'true' ? parsedUsername: '**hidden**';
-                usernameSpan.dataset.editable = usernameSpan.dataset.editable === 'true' ? 'false' : 'true';
-            });
         });
     }
 }
