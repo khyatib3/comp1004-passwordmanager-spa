@@ -533,21 +533,113 @@ class PasswordManager {
 
             row.querySelector(`#${editBtnId}`).addEventListener('click', async () => {
                 if(editBtn.innerText === "Edit"){
+                    //changing from read only to editable
                     accountUserIdLabel.innerHTML = `<input type="text" value="${account.username}" />`;
-                    const decryptedVal = await aesDecrypt(account.password.cip, masterKey, account.password.iv);
                     passwordLabel.innerHTML = `<input type="text" value="${decryptedVal}" />`;
+                    accountSiteNameDiv.innerHTML = `<input type="text" value="${account.siteName}" />`;
+                    accountDateAddedDiv.innerHTML = `<input type="text" value="${account.dateAdded}" />`;
                     editBtn.innerText = "Save";
                 } else if (editBtn.innerText === "Save"){
+                    //retrieving values from input fields
                     const newUsername = accountUserIdLabel.querySelector('input').value;
                     const newPassword = passwordLabel.querySelector('input').value;
+                    const newSiteName = accountSiteNameDiv.querySelector('input').value;
+                    const newDateAdded = accountDateAddedDiv.querySelector('input').value;
 
-                    //saving details
+                    //assigning updated values to account properties
                     account.username = newUsername;
                     account.password = newPassword;
-                    protectedWriteToLocalStorage(userIDHash+"-accounts", account);
-                }
-            })
+                    account.siteName = newSiteName;
+                    account.dateAdded = newDateAdded;
 
+                    //saving account
+                    protectedWriteToLocalStorage(userIDHash+"-accounts", account);
+
+                    //changing element type back to label
+                    accountUserIdLabel.innerHTML = `label`;
+                    passwordLabel.innerHTML = `label`;
+                    accountSiteNameDiv.innerHTML = `div`;
+                    accountDateAddedDiv.innerHTML = `div`;
+                    editBtn.innerText = "Edit";
+                }
+            });
+
+            //delete button functionality
+            row.querySelector(`#${deleteBtnId}`).addEventListener('click', async () => {
+                const modal = document.createElement('div');
+                modal.id = 'delModalID';
+                modal.classList.add('modal', 'fade', 'show');
+                modal.style.display = 'block';
+                modal.style.backgroundColor = 'rgba(0,0,0,0,5)';
+                modal.style.position = 'fixed';
+                modal.style.top = 0;
+                modal.style.left = 0;
+                modal.style.width = '100%';
+                modal.style.height = '100%';
+                modal.style.zIndex = 1050;
+
+                //modal content
+                const modalDialog = document.createElement('div');
+                modalDialog.classList.add('modal-dialog', 'modal-dialog-centered');
+
+                const modalContent = document.createElement('div');
+                modalContent.classList.add('modal-content', 'p-3', 'text-center');
+
+                const modalBody = document.createElement('div');
+                modalBody.classList.add('modal-body');
+
+                const promptQuestion = document.createElement('label');
+                promptQuestion.innerText = "⚠️ You are about to delete this account from PasswordHaven password manager. Do you want to continue?";
+
+                const yesBtn = document.createElement('button');
+                yesBtn.innerText = "Yes, Delete";
+                yesBtn.classList.add('btn', 'btn-danger', 'me-2');
+
+                const noBtn = document.createElement('button');
+                noBtn.innerText = "No, Cancel";
+                noBtn.classList.add('btn', 'btn-secondary');
+
+                //appending
+                modalBody.appendChild(yesBtn);
+                modalBody.appendChild(noBtn);
+                modalContent.appendChild(modalBody);
+                modalDialog.appendChild(modalContent);
+                document.body.appendChild(modalDialog);
+
+                //no button functionality
+                noBtn.addEventListener('click' ,() =>{
+                    modal.remove();
+                });
+
+                //yes button functionality
+                yesBtn.addEventListener('click' ,() =>{
+                    savedAccounts.splice(index, 1);
+                    writeToLocalStorage(userIDHash+"-accounts", savedAccounts);
+
+                    //show deletion confirmation
+                    modalBody.innerHTML ='';
+                    const delMsg = document.createElement('p');
+                    delMsg.innerText = "✅ The account has been deleted.";
+                    modalBody.appendChild(delMsg);
+
+                    const closeBtn = document.createElement('button');
+                    closeBtn.innerText = "Close";
+                    closeBtn.classList.add('btn', 'btn-primary', 'mt-3');
+                    modalBody.appendChild(closeBtn);
+
+                    closeBtn.addEventListener('click', () => {
+                        modal.remove();
+                        PasswordManager.displayAccounts(); // reload the updated list
+                    });
+
+                })
+
+
+
+            });
+
+            //add row to container
+            accountsContainer.appendChild(row);
 
 //             row.innerHTML = `
 //       <tr>
@@ -568,8 +660,6 @@ class PasswordManager {
 //         <button id="${deleteBtnId}" class="btn btn-sm btn-outline-danger">Delete</button>
 //     </td>
 // </tr>`;
-
-
 
             //
             // //creating eye icon functionality for password visibility
@@ -625,8 +715,7 @@ class PasswordManager {
             //     PasswordManager.displayAccounts();
             // });
 
-            //add row to container
-            accountsContainer.appendChild(row);
+
         });
     }
 }
