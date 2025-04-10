@@ -18,7 +18,7 @@ async function aesEncrypt(plaintext, key) {
         encoded
     );
 
-    return{
+    return {
         cipherText: new Uint8Array(cipherText),
         iv: initialisationVector
     };
@@ -26,7 +26,7 @@ async function aesEncrypt(plaintext, key) {
 }
 
 //aes gcm decryption
- async function aesDecrypt(cipherText, key, initialisationVector) {
+async function aesDecrypt(cipherText, key, initialisationVector) {
     const plainText = await crypto.subtle.decrypt(
         {
             name: "AES-GCM",
@@ -40,24 +40,25 @@ async function aesEncrypt(plaintext, key) {
     return uint8ToStr(new Uint8Array(plainText));
 
 }
+
 //example usage below for testing and understanding purposes
-(async () =>{
+(async () => {
     const key = await makeMasterKey("helloWorld");
     const message = "Hello, all!";
     console.log("original:", message);
 
-    const { cipherText, iv} = await aesEncrypt(message, key);
+    const {cipherText, iv} = await aesEncrypt(message, key);
     console.log("Encrypted:", cipherText);
-    const decrypted = await aesDecrypt(cipherText,key, iv);
+    const decrypted = await aesDecrypt(cipherText, key, iv);
     console.log("decrypted:", decrypted);
 
 })();
 
-function strToUint8(string){
+function strToUint8(string) {
     return new TextEncoder().encode(string);
 }
 
-function uint8ToStr(array){
+function uint8ToStr(array) {
     return new TextDecoder().decode(array);
 }
 
@@ -154,15 +155,15 @@ function writeToLocalStorage(key, value) {
 function protectedReadFromLocalStorage(key) {
     let sensitiveData = JSON.parse(localStorage.getItem(key));
     let decryptedValue = null;
-    aesDecrypt(sensitiveData.cipherText, masterKey, sensitiveData.iv).then(value=>{
+    aesDecrypt(sensitiveData.cipherText, masterKey, sensitiveData.iv).then(value => {
         decryptedValue = value;
     });
     return decryptedValue;
 }
 
 function protectedWriteToLocalStorage(key, value) {
-    aesEncrypt(value,masterKey).then((encValue, iv) => {
-        let sensitiveData = {encValue,iv};
+    aesEncrypt(value, masterKey).then((encValue, iv) => {
+        let sensitiveData = {encValue, iv};
         localStorage.setItem(key, JSON.stringify(sensitiveData));
     });
 
@@ -209,9 +210,9 @@ function calculatePasswordStrength(password) {
     if (password.length === 0) { // if they typed nothing
         return "Weak";
     }
-    if (password.length >= 2 && password.length <=7) {
+    if (password.length >= 2 && password.length <= 7) {
         strengthScore += 1;
-    }else if (password.length >= 8) {
+    } else if (password.length >= 8) {
         strengthScore += 2;
     }
 
@@ -225,7 +226,7 @@ function calculatePasswordStrength(password) {
     let hasNumbers = /[0-9]/.test(password) ? 1 : 0;
 
     //checking for special chars
-    let hasSpecialCharacters= /[!"£$%^&*()_+-={}[]:@~#<>?]/.test(password) ? 1 : 0;
+    let hasSpecialCharacters = /[!"£$%^&*()_+-={}[]:@~#<>?]/.test(password) ? 1 : 0;
 
     strengthScore = strengthScore + hasSpecialCharacters + hasNumbers + hasLowerCase + hasUpperCase;
 
@@ -239,7 +240,7 @@ function calculatePasswordStrength(password) {
 }
 
 //live message display for confirm password input against password input
-    document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("confirmPassword").addEventListener("input", function () {
         let password = document.getElementById("password").value;
         let confirmPassword = this.value;
@@ -382,7 +383,7 @@ class User {
 class PasswordManager {
     //function to retrieve the accounts from localStorage
     static getAccounts() {
-        return JSON.parse(localStorage.getItem(userIDHash+"-accounts")) || [];
+        return JSON.parse(localStorage.getItem(userIDHash + "-accounts")) || [];
     }
 
     //adding account to local storage method
@@ -402,12 +403,12 @@ class PasswordManager {
             accountAddMsg.classList.remove('text-success');
             accountAddMsg.classList.add('text-danger');
         } else {
-            PasswordManager.saveSiteAccountDetails(site,url,username,password)
+            PasswordManager.saveSiteAccountDetails(site, url, username, password)
             checkUserLoggedIn('accountSuccessfulAddMsg');
         }
     }
 
-    static saveSiteAccountDetails(siteName, url, username, password){
+    static saveSiteAccountDetails(siteName, url, username, password) {
         //encrypting the password first before storing it
         aesEncrypt(password, masterKey).then(encryptedPassword => {
             //getting local date as d/m/yyyy
@@ -425,13 +426,13 @@ class PasswordManager {
 
             //adding account to list
             accountList.push(account);
-            localStorage.setItem(userIDHash+"-accounts", JSON.stringify(accountList));
+            localStorage.setItem(userIDHash + "-accounts", JSON.stringify(accountList));
             console.log("Saving account with username and password: ", username, password, encryptedPassword);
         });
     }
 
 
-    static async displayAccounts(){
+    static async displayAccounts() {
         document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
         document.getElementById('viewAccounts').classList.add('active');
 
@@ -441,7 +442,7 @@ class PasswordManager {
         accountsContainer.innerHTML = '';
 
         //if there are no saved accounts since user may have yet to add
-        if(savedAccounts.length === 0){
+        if (savedAccounts.length === 0) {
             accountsContainer.innerHTML = "<p class='text-center mt-3'>No accounts stored yet.</p>";
             return;
         }
@@ -526,20 +527,20 @@ class PasswordManager {
             });
 
             row.querySelector(`#${passwordEyeIconId}`).addEventListener('click', async () => {
-                const decrypted = protectedReadFromLocalStorage(userIDHash+"-accounts");
+                const decrypted = protectedReadFromLocalStorage(userIDHash + "-accounts");
                 passwordLabel.innerText = passwordLabel.dataset.editable === 'true' ? decrypted : '*******';
                 passwordLabel.dataset.editable = passwordLabel.dataset.editable === 'true' ? 'false' : 'true';
             });
 
             row.querySelector(`#${editBtnId}`).addEventListener('click', async () => {
-                if(editBtn.innerText === "Edit"){
+                if (editBtn.innerText === "Edit") {
                     //changing from read only to editable
                     accountUserIdLabel.innerHTML = `<input type="text" value="${account.username}" />`;
                     passwordLabel.innerHTML = `<input type="text" value="${decryptedVal}" />`;
                     accountSiteNameDiv.innerHTML = `<input type="text" value="${account.siteName}" />`;
                     accountDateAddedDiv.innerHTML = `<input type="text" value="${account.dateAdded}" />`;
                     editBtn.innerText = "Save";
-                } else if (editBtn.innerText === "Save"){
+                } else if (editBtn.innerText === "Save") {
                     //retrieving values from input fields
                     const newUsername = accountUserIdLabel.querySelector('input').value;
                     const newPassword = passwordLabel.querySelector('input').value;
@@ -553,7 +554,7 @@ class PasswordManager {
                     account.dateAdded = newDateAdded;
 
                     //saving account
-                    protectedWriteToLocalStorage(userIDHash+"-accounts", account);
+                    protectedWriteToLocalStorage(userIDHash + "-accounts", account);
 
                     //changing element type back to label
                     accountUserIdLabel.innerHTML = `label`;
@@ -566,155 +567,67 @@ class PasswordManager {
 
             //delete button functionality
             row.querySelector(`#${deleteBtnId}`).addEventListener('click', async () => {
+                // Remove any existing modal
+                const existingModal = document.getElementById('deletePHAccountModal');
+                if (existingModal) existingModal.remove();
+
+                // Create modal container
                 const modal = document.createElement('div');
-                modal.id = 'delModalID';
-                modal.classList.add('modal', 'fade', 'show');
-                modal.style.display = 'block';
-                modal.style.backgroundColor = 'rgba(0,0,0,0,5)';
-                modal.style.position = 'fixed';
-                modal.style.top = 0;
-                modal.style.left = 0;
-                modal.style.width = '100%';
-                modal.style.height = '100%';
-                modal.style.zIndex = 1050;
+                modal.classList.add('modal', 'fade');
+                modal.id = 'deletePHAccountModal';
+                modal.tabIndex = -1;
+                modal.setAttribute('aria-hidden', 'true');
 
-                //modal content
-                const modalDialog = document.createElement('div');
-                modalDialog.classList.add('modal-dialog', 'modal-dialog-centered');
+                // Inner modal dialog
+                modal.innerHTML = `
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Delete Account</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p>⚠️ You are about to delete this account from PasswordHaven. Do you want to continue?</p>
+                    <div id="deleteModalMessage"></div>
+                </div>
+                <div class="modal-footer">
+                    <button id="confirmDeleteBtn" class="btn btn-danger">Yes, Delete</button>
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">No, Cancel</button>
+                </div>
+            </div>
+        </div>
+    `
+                //appending the modal
+                document.body.appendChild(modal);
 
-                const modalContent = document.createElement('div');
-                modalContent.classList.add('modal-content', 'p-3', 'text-center');
+                // Initialize Bootstrap modal
+                const bootstrapModal = new bootstrap.Modal(modal);
+                bootstrapModal.show();
+                const confirmDeleteBtn = modal.querySelector('#confirmDeleteBtn');
+                const modalBody = modal.querySelector('.modal-body');
 
-                const modalBody = document.createElement('div');
-                modalBody.classList.add('modal-body');
-
-                const promptQuestion = document.createElement('label');
-                promptQuestion.innerText = "⚠️ You are about to delete this account from PasswordHaven password manager. Do you want to continue?";
-
-                const yesBtn = document.createElement('button');
-                yesBtn.innerText = "Yes, Delete";
-                yesBtn.classList.add('btn', 'btn-danger', 'me-2');
-
-                const noBtn = document.createElement('button');
-                noBtn.innerText = "No, Cancel";
-                noBtn.classList.add('btn', 'btn-secondary');
-
-                //appending
-                modalBody.appendChild(yesBtn);
-                modalBody.appendChild(noBtn);
-                modalContent.appendChild(modalBody);
-                modalDialog.appendChild(modalContent);
-                document.body.appendChild(modalDialog);
-
-                //no button functionality
-                noBtn.addEventListener('click' ,() =>{
-                    modal.remove();
-                });
-
-                //yes button functionality
-                yesBtn.addEventListener('click' ,() =>{
+                confirmDeleteBtn.addEventListener('click', () => {
+                    //remove the chosen account
                     savedAccounts.splice(index, 1);
-                    writeToLocalStorage(userIDHash+"-accounts", savedAccounts);
+                    writeToLocalStorage(userIDHash + "-accounts", savedAccounts);
 
-                    //show deletion confirmation
-                    modalBody.innerHTML ='';
-                    const delMsg = document.createElement('p');
-                    delMsg.innerText = "✅ The account has been deleted.";
-                    modalBody.appendChild(delMsg);
+                    //updating user with deletion confirmation
+                    modalBody.innerHTML = `<p class="text-success">✅ The account has been deleted.</p>`;
 
-                    const closeBtn = document.createElement('button');
-                    closeBtn.innerText = "Close";
-                    closeBtn.classList.add('btn', 'btn-primary', 'mt-3');
-                    modalBody.appendChild(closeBtn);
+                    //replace footer buttons with Close button after deletion confirmation
+                    const modalFooter = modal.querySelector('.modal-footer');
+                    modalFooter.innerHTML = `<button class="btn btn-primary" data-bs-dismiss="modal">Close</button>`;
 
-                    closeBtn.addEventListener('click', () => {
-                        modal.remove();
-                        PasswordManager.displayAccounts(); // reload the updated list
+                    //refreshing the accounts display
+                    modal.addEventListener('hidden.bs.modal', () => {
+                        PasswordManager.displayAccounts();
+                        modal.remove(); // clean up DOM
                     });
-
-                })
-
-
-
+                });
             });
 
             //add row to container
             accountsContainer.appendChild(row);
-
-//             row.innerHTML = `
-//       <tr>
-//       <td>${account.siteName}</td>
-//     <td>${account.dateAdded}</td>
-//     <td>
-//         <span id="${usernameId}" data-editable="false">${account.username}</span>
-//         <button id="${userEyeIconId}" class="btn btn-sm btn-outline-secondary">👁️</button>
-//     </td>
-//     <td>
-//         <span id="${passwordId}" data-editable="false">********</span>
-//         <button id="${passwordEyeIconId}" class="btn btn-sm btn-outline-secondary">👁️</button>
-//     </td>
-//     <td>
-//         <button id="${editBtnId}" class="btn btn-sm btn-outline-primary">Edit</button>
-//     </td>
-//     <td>
-//         <button id="${deleteBtnId}" class="btn btn-sm btn-outline-danger">Delete</button>
-//     </td>
-// </tr>`;
-
-            //
-            // //creating eye icon functionality for password visibility
-            // row.querySelector(`#${passwordEyeIconId}`).addEventListener('click', async () => {
-            //     const passwordSpan = document.getElementById(passwordId);
-            //     const decrypted = JSON.parse(await Account.aesDecrypt(account.password));
-            //     passwordSpan.innerText = passwordSpan.dataset.editable === 'true' ? decrypted : '********';
-            //     passwordSpan.dataset.editable = passwordSpan.dataset.editable === 'true' ? 'false' : 'true';
-            // });
-            //
-            // //adding edit button/save button functionality
-            // row.querySelector(`#${editBtnId}`).addEventListener('click', async () => {
-            //     const editButton = row.querySelector(`#${editBtnId}`);
-            //     const usernameSpan = document.getElementById(usernameId);
-            //     const passwordSpan = document.getElementById(passwordId);
-            //
-            //     //checking what state the button is in, edit or save
-            //     if (editButton.innerText === 'Edit') {
-            //         // make username and password fields editable
-            //         usernameSpan.innerHTML = `<input type="text" value="${account.username}" />`;
-            //         passwordSpan.innerHTML = `<input type="text" value="${account.password}" />`;
-            //         //changing button state to save to let users save modification
-            //         editButton.innerText = 'Save';
-            //     } else {
-            //         //button is in save state, so save changes made
-            //         const newUsername = usernameSpan.querySelector('input').value;
-            //         const newPassword = passwordSpan.querySelector('input').value;
-            //
-            //         //rewriting account details
-            //         account.username = newUsername;
-            //         //not encrypting again here, since encryption is being called in saveSiteAccountDetails()
-            //         account.password = newPassword;
-            //
-            //         //first deleting the existing record of that account, so duplicates aren't stored
-            //         savedAccounts.splice(index, 1);
-            //         //then saving the updated account
-            //         PasswordManager.saveSiteAccountDetails(account.siteName, account.url, account.username, account.password, account.dateAdded);
-            //
-            //         usernameSpan.innerText = account.username;
-            //         passwordSpan.innerText = '********';
-            //
-            //         //since save button is used now, set state back to edit
-            //         editButton.innerText = 'Edit';
-            //     }
-            // });
-            //
-            // // Delete button functionality
-            // row.querySelector(`#${deleteBtnId}`).addEventListener('click', () => {
-            //     savedAccounts.splice(index, 1);
-            //     localStorage.setItem('accounts', JSON.stringify(savedAccounts));
-            //
-            //     //show the updated stored accounts again.
-            //     PasswordManager.displayAccounts();
-            // });
-
 
         });
     }
