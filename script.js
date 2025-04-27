@@ -314,6 +314,31 @@ function calculatePasswordStrength(password) {
     }
 }
 
+//toggling between password and confirm password input fields visibility
+document.addEventListener("DOMContentLoaded", function(){
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+
+    const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
+    const confirmPasswordInput = document.getElementById('confirmPassword');
+
+    togglePassword.addEventListener('click', function(){
+        const icon = this.querySelector('i');
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        icon.classList.toggle('bi-eye');
+        icon.classList.toggle('bi-eye-slash');
+    });
+
+    toggleConfirmPassword.addEventListener('click', function(){
+        const icon = this.querySelector('i');
+        const type = confirmPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        confirmPasswordInput.setAttribute('type', type);
+        icon.classList.toggle('bi-eye');
+        icon.classList.toggle('bi-eye-slash');
+    });
+});
+
 //live message display for confirm password input against password input
 document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("confirmPassword").addEventListener("input", function () {
