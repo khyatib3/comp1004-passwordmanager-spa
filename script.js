@@ -315,14 +315,14 @@ function calculatePasswordStrength(password) {
 }
 
 //toggling between password and confirm password input fields visibility
-document.addEventListener("DOMContentLoaded", function(){
+document.addEventListener("DOMContentLoaded", function () {
     const togglePassword = document.getElementById('togglePassword');
     const passwordInput = document.getElementById('password');
 
     const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
     const confirmPasswordInput = document.getElementById('confirmPassword');
 
-    togglePassword.addEventListener('click', function(){
+    togglePassword.addEventListener('click', function () {
         const icon = this.querySelector('i');
         const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
         passwordInput.setAttribute('type', type);
@@ -330,7 +330,7 @@ document.addEventListener("DOMContentLoaded", function(){
         icon.classList.toggle('bi-eye-slash');
     });
 
-    toggleConfirmPassword.addEventListener('click', function(){
+    toggleConfirmPassword.addEventListener('click', function () {
         const icon = this.querySelector('i');
         const type = confirmPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
         confirmPasswordInput.setAttribute('type', type);
@@ -663,22 +663,23 @@ class PasswordManager {
             //edit button functionality
             row.querySelector(`#${editBtnId}`).addEventListener('click', async () => {
                 const editButton = document.getElementById(`${editBtnId}`);
-                console.log("Edit button id", editBtnId);
-                console.log("Edit buttoninnertext", editButton.innerText);
-                console.log("Edit button", editButton);
+
                 const usernameSpan = document.getElementById(userDivId);
                 const passwordSpan = document.getElementById(passwordDivId);
                 const siteNameSpan = document.getElementById(siteId);
                 const dateAddedSpan = document.getElementById(dateId);
+
                 let textValue = editButton.innerText;
                 console.log("Edit buttoninnertext", textValue);
                 //checking what state the button is in, edit or save
                 if (textValue == "Edit") { // "Edit️"
-                    // make username and password fields editable
+                    //retrieving decrypted password from local storage to be displayed
                     const parts = event.target.id.split('-');
                     const counter = parts[parts.length - 1];
                     const passwordLabel = document.getElementById(`p-${counter}`);
                     const decrypted = await protectedReadFromLocalStorage(userIDHash + "-accounts", counter);
+
+                    // make username and password fields editable
                     usernameSpan.innerHTML = `<input type="text" class="form-control form-control-sm" value="${account.username}" />`;
                     passwordSpan.innerHTML = `<input type="text" class="form-control form-control-sm" value="${decrypted}" />`;
                     siteNameSpan.innerHTML = `<input type="text" class="form-control form-control-sm" value="${account.siteName}" />`;
@@ -704,10 +705,32 @@ class PasswordManager {
                     //then saving the updated account
                     PasswordManager.saveSiteAccountDetails(account.siteName, account.url, account.username, account.password, account.dateAdded);
 
-                    usernameSpan.innerHTML = 'div';
-                    passwordSpan.innerHTML = 'div';
-                    siteNameSpan.innerHTML = 'div';
-                    dateAddedSpan.innerHTML = 'div';
+
+                    usernameSpan.innerHTML = `<label id="${usernameId}" class="account-detail">${newUsername}</label>`;
+                    passwordSpan.innerHTML = `<label id="${passwordId}" class="account-detail">*******</label>`;
+                    siteNameSpan.innerHTML = `<label id="${siteId}" class="account-detail">${newSiteName}</label>`;
+                    dateAddedSpan.innerHTML = `<label id="${dateId}" class="account-detail">${newDateAdded}</label>`;
+
+                    //username with eye button
+                    usernameSpan.innerHTML = `<label id="${usernameId}" class="account-detail">*******</label>
+                    <button id="${userEyeIconId}" class="btn btn-sm btn-outline-secondary">👁️</button>`;
+
+                    //password with eye button
+                    passwordSpan.innerHTML = `<label id="${passwordId}" class="account-detail">*******</label>  <!-- Masked password initially -->
+                    <button id="${passwordEyeIconId}" class="btn btn-sm btn-outline-secondary">👁️</button>`;
+
+                    //reapplying the eye icon toggle functionality
+                    //username eye button toggle logic
+                    row.querySelector(`#${userEyeIconId}`).addEventListener('click', () => {
+                        const usernameLabel = document.getElementById(usernameId);
+                        usernameLabel.innerText = usernameLabel.innerText === '*******' ? account.username : '*******';
+                    });
+
+                    //password eye button toggle logic
+                    row.querySelector(`#${passwordEyeIconId}`).addEventListener('click', async () => {
+                        const passwordLabel = document.getElementById(passwordId);
+                        passwordLabel.innerText = passwordLabel.innerText === '*******' ? account.password : '*******';
+                    });
 
                     //since save button is used now, set state back to edit
                     editButton.innerText = 'Edit';
