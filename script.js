@@ -372,7 +372,11 @@ function showLogoutOption() {
 //to hide the logout option
 function hideLogoutOption() {
     document.getElementById('logoutId').style.display = 'none';
-    checkUserLoggedIn('homeSectionPostLogin');
+    if(localStorage.getItem("loggedIn") === "true"){
+        showSection('homeSectionPostLogin');
+    }else if (localStorage.getItem("loggedIn") === "false"){
+        showSection('home');
+    }
 }
 
 class User {
@@ -483,8 +487,8 @@ class User {
     }
 
     static handleLogout() {
-        // let currentUser = User.getUser(userIDHash);
-        // currentUser.
+        localStorage.setItem("loggedIn", "false");
+        hideLogoutOption();
     }
 }
 
@@ -806,9 +810,6 @@ class PasswordManager {
 }
 
 // Account class below
-/**
- *
- */
 class Account {
     constructor(siteName, url, username, password, dateAdded) {
         this.siteName = siteName;
@@ -819,9 +820,6 @@ class Account {
     }
 }
 
-/**
- *
- */
 class PasswordGenerator {
     static generatePassword() {
         const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
