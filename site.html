@@ -22,7 +22,7 @@
 <!-- Navigation bar -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
-        <a class="navbar-brand" href="#" onclick="checkUserLoggedIn('home')">PasswordHaven</a>
+        <a class="navbar-brand" href="#" onclick="home()">PasswordHaven</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -31,6 +31,9 @@
                 <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('learnMore')">Learn More</a></li>
                 <li class="nav-item"><a class="nav-link" href="#" onclick="PasswordManager.displayAccounts()">View Accounts</a></li>
                 <li class="nav-item"><a class="nav-link" href="#" onclick="checkUserLoggedIn('accountAdd')">Add Account</a></li>
+                <li id="logoutId" class="nav-item" style="display: none;">
+                    <a class="nav-link" href="#" onclick="checkUserLoggedIn('logoutSectionId')">Logout</a>
+                </li>
             </ul>
         </div>
     </div>
@@ -43,7 +46,7 @@
         <p class="lead">The safest and easiest way to manage your passwords and accounts.</p>
         <button class="btn btn-light btn-lg mt-3" data-bs-toggle="modal" data-bs-target="#createPHAccountModal">Create Account</button>
         <button class="btn btn-light btn-lg mt-3" data-bs-toggle="modal" data-bs-target="#loginModal">Login</button>
-    </div> <!-- TODO add a list of small succint bullet points on why users should passwordHaven -->
+    </div>
 </section>
 
 <!-- create passwordHaven account modal pop up-->
@@ -62,12 +65,25 @@
                 <p id="signUpMsg" class="mt-2 text-danger"></p>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-primary" onclick="User.handleSignUp()"> Create PasswordHaven Account</button>
                 <button class="btn btn-light btn-lg" data-bs-toggle="modal" data-bs-target="#generatePasswordModal" onclick="PasswordGenerator.generatePassword()">Generate Password</button>
+                <button class="btn btn-primary" onclick="User.handleSignUp()"> Create PasswordHaven Account</button>
+
             </div>
         </div>
     </div>
 </div>
+
+<!-- logout section -->
+<section id="logoutSectionId" class="section text-center text-black align-items-center mt-2" style="background: #d3e7ef; padding-top: 5rem;">
+    <div class="container">
+        <h1 class="display-4">Log Out</h1>
+        <p class="lead">You are about to log out of PasswordHaven.</p>
+        <p class="lead">Are you sure you want to do this?</p>
+        <button class="btn btn-outline-secondary" onclick="checkUserLoggedIn('homeSectionPostLogin')">No, go home</button>
+        <button class="btn btn-outline-danger" onclick="User.handleLogout()">Yes, log me out</button>
+    </div>
+</section>
+
 
 <!-- account adding description section -->
 <section id="accountAdd" class="section text-center text-black align-items-center mt-3" style="background: #4290e3; padding-top: 5rem;">
@@ -101,18 +117,20 @@
         <p id="accountAddMsg" class="mt-2 text-danger"></p>
     </div>
     <div class = "modal-footer">
-        <button class="btn btn-primary" onclick="PasswordManager.addAccount()">Add account</button>
         <button class="btn btn-light btn-lg" data-bs-toggle="modal" data-bs-target="#generatePasswordModal" onclick="PasswordGenerator.generatePassword()">Generate Password</button>
+        <button class="btn btn-primary" onclick="PasswordManager.addAccount()">Add account</button>
     </div>
 </section>
 
 
 <!-- successful account addition section to be shown after addAccount-->
-<section id="accountSuccessfulAddMsg" class="section container align-items-center mt-3">
-    <h2 class = "text-success-center mb-4">Account successfully added!</h2>
-    <p class="lead text-center mb-5">Thank you for using PasswordHaven! This account was successfully added to the password Manager.</p>
-    <p class="lead text-center mb-5">You can view, edit, or delete it when you click "View Accounts" in the navigation bar above.</p>
-    <button class="btn btn-primary btn-lg mt-3" onclick="showSection('homeSectionPostLogin')">Take me Home.</button>
+<section id="accountSuccessfulAddMsg" class="section text-center align-items-center mt-3">
+    <div class="container">
+        <h2 class = "text-success-center mb-4">Account successfully added!</h2>
+        <p class="lead text-center mb-5">Thank you for using PasswordHaven! This account was successfully added to the password Manager.</p>
+        <p class="lead text-center mb-5">You can view, edit, or delete it when you click "View Accounts" in the navigation bar above.</p>
+        <button class="btn btn-primary btn-lg mt-3" onclick="showSection('homeSectionPostLogin')">Take me Home.</button>
+    </div>
 </section>
 
 <!-- generate password modal -->
@@ -138,7 +156,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="loginModalLabel">Login to PasswordHaven</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" onclick="checkUserLoggedIn('homeSectionPostLogin')"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" onclick="close()"></button>
             </div>
             <div class="modal-body">
                 <label>Email:</label>

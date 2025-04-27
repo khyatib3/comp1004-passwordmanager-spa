@@ -1,9 +1,18 @@
 //global variables
+/**
+ *
+ */
 let userIDHash = "";
+/**
+ *
+ */
 let masterKey = null;
 
 
 //aes gcm encryption
+/**
+ *
+ */
 async function aesEncrypt(plaintext, key) {
     //using an initialisation vector
     const initialisationVector = crypto.getRandomValues(new Uint8Array(12));
@@ -26,6 +35,9 @@ async function aesEncrypt(plaintext, key) {
 }
 
 //aes gcm decryption
+/**
+ *
+ */
 async function aesDecrypt(cipherText, key, initialisationVector) {
     const plainText = await crypto.subtle.decrypt(
         {
@@ -54,15 +66,24 @@ async function aesDecrypt(cipherText, key, initialisationVector) {
 
 })();
 
+/**
+ *
+ */
 function strToUint8(string) {
     return new TextEncoder().encode(string);
 }
 
+/**
+ *
+ */
 function uint8ToStr(array) {
     return new TextDecoder().decode(array);
 }
 
 //making masterKey to from userId+password hash
+/**
+ *
+ */
 async function makeMasterKey(myString) {
     // const salt = crypto.getRandomValues(new Uint8Array(16));
     const salt = new TextEncoder().encode("saltToMakeTastey");
@@ -94,6 +115,9 @@ async function makeMasterKey(myString) {
 }
 
 //function to show the relevant section when needed, so all sections don't get displayed automatically
+/**
+ *
+ */
 function showSection(sectionId) {
     //hiding all the sections
     document.querySelectorAll('.section').forEach(section => {
@@ -112,6 +136,9 @@ function showSection(sectionId) {
 
 //function which is used for hashing usernames and passwords
 //will be used to make the masterKey
+/**
+ *
+ */
 async function hash(value) {
     const encoder = new TextEncoder();
     const data = encoder.encode(value);
@@ -132,6 +159,9 @@ async function hash(value) {
 
 //method that checks whether the suer has logged into PH before they choose to see accounts.
 //ensures security
+/**
+ *
+ */
 function checkUserLoggedIn(sectionId) {
     let userLoggedIn = localStorage.getItem("loggedIn");
     if (userLoggedIn !== "true") {
@@ -144,23 +174,62 @@ function checkUserLoggedIn(sectionId) {
     showSection(sectionId);
 }
 
+//PasswordHaven click
+function home() {
+    let userLoggedIn = localStorage.getItem("loggedIn");
+    if (userLoggedIn === "true") {
+        showSection("homeSectionPostLogin");
+    } else {
+        showSection("home");
+        return;
+    }
+}
+
+function uint8ToBase64(uint8array) {
+    let binary = '';
+    uint8array.forEach((b) => binary += String.fromCharCode(b));
+    return window.btoa(binary);
+}
+
+function base64ToUint8(base64) {
+    const binary = window.atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes;
+}
+
+/**
+ *
+ */
 function readFromLocalStorage(readItem) {
     return JSON.parse(localStorage.getItem(readItem.toString()));
 }
 
+/**
+ *
+ */
 function writeToLocalStorage(key, value) {
     localStorage.setItem(key, JSON.stringify(value));
 }
 
-function protectedReadFromLocalStorage(key) {
-    let sensitiveData = JSON.parse(localStorage.getItem(key));
-    let decryptedValue = null;
-    aesDecrypt(sensitiveData.cipherText, masterKey, sensitiveData.iv).then(value => {
-        decryptedValue = value;
-    });
+/**
+ *
+ */
+async function protectedReadFromLocalStorage(key, index) {
+    let accountData = localStorage.getItem(key);
+    let sensitiveData = JSON.parse(accountData);
+    let account = sensitiveData[index];
+    let ct = base64ToUint8(account.password.cipherText);
+    let iv = base64ToUint8(account.password.iv);
+    let decryptedValue = await aesDecrypt(ct, masterKey, iv);
     return decryptedValue;
 }
 
+/**
+ *
+ */
 function protectedWriteToLocalStorage(key, value) {
     aesEncrypt(value, masterKey).then((encValue, iv) => {
         let sensitiveData = {encValue, iv};
@@ -169,6 +238,9 @@ function protectedWriteToLocalStorage(key, value) {
 
 }
 
+/**
+ *
+ */
 function displayPasswordStrength() {
     let password = document.getElementById("password").value;
     let indicator = document.getElementById("passwordStrengthIndicator");
@@ -202,6 +274,9 @@ function displayPasswordStrength() {
 
 }
 
+/**
+ *
+ */
 function calculatePasswordStrength(password) {
     //creating a strength 'score'
     let strengthScore = 0;
@@ -264,6 +339,16 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
+//to show the logout option
+function showLogoutOption() {
+    document.getElementById('logoutId').style.display = 'block';
+}
+
+//to hide the logout option
+function hideLogoutOption() {
+    document.getElementById('logoutId').style.display = 'none';
+    checkUserLoggedIn('homeSectionPostLogin');
+}
 
 class User {
     constructor(username, password) {
@@ -296,7 +381,7 @@ class User {
         return userInfo ? JSON.parse(userInfo) : null;
     }
 
-//checking if login details match entered details
+    //checking if login details match entered details
     static async login(username, inputPassword) {
         userIDHash = await hash(username);
         let hashedPasswordFromLocalStorage = readFromLocalStorage(userIDHash);
@@ -358,28 +443,29 @@ class User {
         let email = document.getElementById('loginEmail').value;
         let password = document.getElementById('loginPassword').value;
         let loginMsg = document.getElementById('loginMsg');
-
+        let modal = document.getElementById('loginModal');
 
         let detailsMatch = await User.login(email, password);
         if (detailsMatch) {
             localStorage.setItem("loggedIn", "true");
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('loginModal')).hide();
+            checkUserLoggedIn('homeSectionPostLogin');
+            showLogoutOption();
 
-            loginMsg.innerHTML = "✅Successful Login!";
-            loginMsg.classList.remove('text-danger');
-            loginMsg.classList.add('text-success');
-            // //closing the modal afterward
-            // setTimeout(()=>{
-            //     let loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
-            //     if (loginModal) {
-            //         loginModal.hide();
-            //     }
-            // }, 1000); //close after 1 second
         } else {
             loginMsg.innerHTML = " ❌ Invalid details entered!";
         }
     }
+
+    static handleLogout() {
+        // let currentUser = User.getUser(userIDHash);
+        // currentUser.
+    }
 }
 
+/**
+ *
+ */
 class PasswordManager {
     //function to retrieve the accounts from localStorage
     static getAccounts() {
@@ -421,13 +507,18 @@ class PasswordManager {
             // Remove any existing account for the same siteName
             accountList = accountList.filter(acc => acc.siteName !== siteName);
 
+            //formatting encrypted password to base64
+            let ep = {};
+            ep.cipherText = uint8ToBase64(encryptedPassword.cipherText);
+            ep.iv = uint8ToBase64(encryptedPassword.iv);
+
             //creating instance of new account
-            const account = new Account(siteName, url, username, encryptedPassword, dateString);
+            const account = new Account(siteName, url, username, ep, dateString);
 
             //adding account to list
             accountList.push(account);
             localStorage.setItem(userIDHash + "-accounts", JSON.stringify(accountList));
-            console.log("Saving account with username and password: ", username, password, encryptedPassword);
+            console.log("Saving account with username and password: ", username, password, ep);
         });
     }
 
@@ -454,9 +545,12 @@ class PasswordManager {
             row.id = `accountRow${index}`;
             row.setAttribute('data-index', index);
 
-            const accountRecordId = index + 1;
+            //creating dom ids
+            const accountRecordId = "-" + index;
             const siteId = `s${accountRecordId}`;
             const dateId = `d${accountRecordId}`;
+            const userDivId = `uD${accountRecordId}`;
+            const passwordDivId = `pD${accountRecordId}`;
             const usernameId = `u${accountRecordId}`;
             const passwordId = `p${accountRecordId}`;
             const editBtnId = `e${accountRecordId}`;
@@ -478,10 +572,12 @@ class PasswordManager {
 
             const accountUserIdDiv = document.createElement('div');
             accountUserIdDiv.classList.add('col-2');
+            accountUserIdDiv.id = userDivId;
 
             const accountUserIdLabel = document.createElement('label');
             accountUserIdLabel.id = usernameId;
             accountUserIdLabel.innerText = "*******";
+            accountUserIdLabel.dataset.editable = 'true';
             accountUserIdDiv.appendChild(accountUserIdLabel);
 
             const usernameEyeBtn = document.createElement('button');
@@ -493,10 +589,12 @@ class PasswordManager {
 
             const passwordDiv = document.createElement('div');
             passwordDiv.classList.add('col-2');
+            passwordDiv.id = passwordDivId;
 
             const passwordLabel = document.createElement('label');
             passwordLabel.id = passwordId;
             passwordLabel.innerText = "*******";
+            passwordLabel.dataset.editable = 'true';
             passwordDiv.appendChild(passwordLabel);
 
             const passwordEyeBtn = document.createElement('button');
@@ -510,7 +608,7 @@ class PasswordManager {
             editBtn.classList.add('col-2');
             editBtn.id = editBtnId;
             editBtn.classList.add('btn', 'btn-sm', 'btn-outline-primary');
-            editBtn.innerText = "Edit️";
+            editBtn.innerText = "Edit";
             row.appendChild(editBtn);
 
             const deleteBtn = document.createElement('button');
@@ -521,47 +619,73 @@ class PasswordManager {
             row.appendChild(deleteBtn);
 
             //adding eye buttons functionality
+            //username eye icon
             row.querySelector(`#${userEyeIconId}`).addEventListener('click', async () => {
                 accountUserIdLabel.innerText = accountUserIdLabel.dataset.editable === 'true' ? account.username : '*******';
                 accountUserIdLabel.dataset.editable = accountUserIdLabel.dataset.editable === 'true' ? 'false' : 'true';
             });
 
-            row.querySelector(`#${passwordEyeIconId}`).addEventListener('click', async () => {
-                const decrypted = protectedReadFromLocalStorage(userIDHash + "-accounts");
+            //password eye icon
+            row.querySelector(`#${passwordEyeIconId}`).addEventListener('click', async (event) => {
+                const parts = event.target.id.split('-');
+                const counter = parts[parts.length - 1];
+                const passwordLabel = document.getElementById(`p-${counter}`);
+                const decrypted = await protectedReadFromLocalStorage(userIDHash + "-accounts", counter);
                 passwordLabel.innerText = passwordLabel.dataset.editable === 'true' ? decrypted : '*******';
                 passwordLabel.dataset.editable = passwordLabel.dataset.editable === 'true' ? 'false' : 'true';
             });
 
+            //edit button functionality
             row.querySelector(`#${editBtnId}`).addEventListener('click', async () => {
-                if (editBtn.innerText === "Edit") {
-                    //changing from read only to editable
-                    accountUserIdLabel.innerHTML = `<input type="text" value="${account.username}" />`;
-                    passwordLabel.innerHTML = `<input type="text" value="${decryptedVal}" />`;
-                    accountSiteNameDiv.innerHTML = `<input type="text" value="${account.siteName}" />`;
-                    accountDateAddedDiv.innerHTML = `<input type="text" value="${account.dateAdded}" />`;
-                    editBtn.innerText = "Save";
-                } else if (editBtn.innerText === "Save") {
-                    //retrieving values from input fields
-                    const newUsername = accountUserIdLabel.querySelector('input').value;
-                    const newPassword = passwordLabel.querySelector('input').value;
-                    const newSiteName = accountSiteNameDiv.querySelector('input').value;
-                    const newDateAdded = accountDateAddedDiv.querySelector('input').value;
+                const editButton = document.getElementById(`${editBtnId}`);
+                console.log("Edit button id", editBtnId);
+                console.log("Edit buttoninnertext", editButton.innerText);
+                console.log("Edit button", editButton);
+                const usernameSpan = document.getElementById(userDivId);
+                const passwordSpan = document.getElementById(passwordDivId);
+                const siteNameSpan = document.getElementById(siteId);
+                const dateAddedSpan = document.getElementById(dateId);
+                let textValue = editButton.innerText;
+                console.log("Edit buttoninnertext", textValue);
+                //checking what state the button is in, edit or save
+                if (textValue == "Edit") { // "Edit️"
+                    // make username and password fields editable
+                    const parts = event.target.id.split('-');
+                    const counter = parts[parts.length - 1];
+                    const passwordLabel = document.getElementById(`p-${counter}`);
+                    const decrypted = await protectedReadFromLocalStorage(userIDHash + "-accounts", counter);
+                    usernameSpan.innerHTML = `<input type="text" class="form-control form-control-sm" value="${account.username}" />`;
+                    passwordSpan.innerHTML = `<input type="text" class="form-control form-control-sm" value="${decrypted}" />`;
+                    siteNameSpan.innerHTML = `<input type="text" class="form-control form-control-sm" value="${account.siteName}" />`;
+                    dateAddedSpan.innerHTML = `<input type="text" class="form-control form-control-sm" value="${account.dateAdded}" />`;
+                    //changing button state to save to let users save modification
+                    editButton.innerText = 'Save';
+                } else {
+                    //button is in save state, so save changes made
+                    const newUsername = usernameSpan.querySelector('input').value.trim();
+                    const newPassword = passwordSpan.querySelector('input').value.trim();
+                    const newSiteName = siteNameSpan.querySelector('input').value.trim();
+                    const newDateAdded = dateAddedSpan.querySelector('input').value.trim();
 
-                    //assigning updated values to account properties
+                    //rewriting account details
                     account.username = newUsername;
+                    //not encrypting again here, since encryption is being called in saveSiteAccountDetails()
                     account.password = newPassword;
                     account.siteName = newSiteName;
                     account.dateAdded = newDateAdded;
 
-                    //saving account
-                    protectedWriteToLocalStorage(userIDHash + "-accounts", account);
+                    //first deleting the existing record of that account, so duplicates aren't stored
+                    savedAccounts.splice(index, 1);
+                    //then saving the updated account
+                    PasswordManager.saveSiteAccountDetails(account.siteName, account.url, account.username, account.password, account.dateAdded);
 
-                    //changing element type back to label
-                    accountUserIdLabel.innerHTML = `label`;
-                    passwordLabel.innerHTML = `label`;
-                    accountSiteNameDiv.innerHTML = `div`;
-                    accountDateAddedDiv.innerHTML = `div`;
-                    editBtn.innerText = "Edit";
+                    usernameSpan.innerHTML = 'div';
+                    passwordSpan.innerHTML = 'div';
+                    siteNameSpan.innerHTML = 'div';
+                    dateAddedSpan.innerHTML = 'div';
+
+                    //since save button is used now, set state back to edit
+                    editButton.innerText = 'Edit';
                 }
             });
 
@@ -634,6 +758,9 @@ class PasswordManager {
 }
 
 // Account class below
+/**
+ *
+ */
 class Account {
     constructor(siteName, url, username, password, dateAdded) {
         this.siteName = siteName;
@@ -644,6 +771,9 @@ class Account {
     }
 }
 
+/**
+ *
+ */
 class PasswordGenerator {
     static generatePassword() {
         const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
