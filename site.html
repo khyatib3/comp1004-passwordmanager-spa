@@ -59,7 +59,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <label>Email:</label>
+                <label>Email/username:</label>
                 <input type="email" id="signUpEmail" class="form-control">
                 <label>Password:</label>
                 <input type="password" id="signUpPassword" class="form-control">
@@ -97,19 +97,19 @@
 
 <!-- add an account form section -->
 <section id="addAccountForm" class = "section container mt-3">
-    <h2 class = "text-center mb-4">New account form</h2>
+    <h2 class = "text-center mb-4"> <strong> New account form </strong></h2>
     <p class="lead text-center mb-5">Please fill all the forms below to add your account .</p>
     <div class = "container mt-3">
-        <label>Site name:</label>
+        <label><strong> Site name: </strong></label>
         <input type="text" id="nickname" class="form-control">
-        <label>Website URL:</label>
+        <label><strong>Website URL:</strong></label>
         <input type="url" id="url" class="form-control">
-        <label>Email/username:</label>
+        <label><strong>Email/username:</strong></label>
         <input type="username" id="username" class="form-control">
 
-        <label>Password:</label>
+        <label><strong>Password:</strong></label>
         <div class="input-group mb-3">
-            <input type="password" id="password" class="form-control" oninput="displayPasswordStrength()">
+            <input type="password" id="password" class="form-control" oninput="PasswordStrength.displayPasswordStrength()">
             <button class="btn btn-outline-secondary" type="button" id="togglePassword"> <i class="bi bi-eye"></i>
             </button>
         </div>
@@ -121,7 +121,7 @@
         <small id="passwordStrengthIndicator" class="form-text text-muted"></small>
 
         <!-- confirm password group -->
-        <label>Confirm Password:</label>
+        <label><strong>Confirm Password:</strong></label>
         <div class="input-group mb-3">
             <input type="password" id="confirmPassword" class="form-control">
             <button class="btn btn-outline-secondary" type="button" id="toggleConfirmPassword"> <i class="bi bi-eye"></i>

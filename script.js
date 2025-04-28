@@ -1,22 +1,13 @@
 //global variables
-/**
- *
- */
-let userIDHash = "";
-/**
- *
- */
+let userIDHash = null;
 let masterKey = null;
 
 
 //aes gcm encryption
-/**
- *
- */
 async function aesEncrypt(plaintext, key) {
     //using an initialisation vector
     const initialisationVector = crypto.getRandomValues(new Uint8Array(12));
-    const encoded = strToUint8(plaintext);
+    const encoded = Formats.strToUint8(plaintext);
 
     const cipherText = await crypto.subtle.encrypt(
         {
@@ -35,9 +26,6 @@ async function aesEncrypt(plaintext, key) {
 }
 
 //aes gcm decryption
-/**
- *
- */
 async function aesDecrypt(cipherText, key, initialisationVector) {
     const plainText = await crypto.subtle.decrypt(
         {
@@ -49,7 +37,7 @@ async function aesDecrypt(cipherText, key, initialisationVector) {
     );
 
     //return the password
-    return uint8ToStr(new Uint8Array(plainText));
+    return Formats.uint8ToStr(new Uint8Array(plainText));
 
 }
 
@@ -66,24 +54,7 @@ async function aesDecrypt(cipherText, key, initialisationVector) {
 
 })();
 
-/**
- *
- */
-function strToUint8(string) {
-    return new TextEncoder().encode(string);
-}
-
-/**
- *
- */
-function uint8ToStr(array) {
-    return new TextDecoder().decode(array);
-}
-
 //making masterKey to from userId+password hash
-/**
- *
- */
 async function makeMasterKey(myString) {
     // const salt = crypto.getRandomValues(new Uint8Array(16));
     const salt = new TextEncoder().encode("saltToMakeTastey");
@@ -115,9 +86,7 @@ async function makeMasterKey(myString) {
 }
 
 //function to show the relevant section when needed, so all sections don't get displayed automatically
-/**
- *
- */
+
 function showSection(sectionId) {
     //hiding all the sections
     document.querySelectorAll('.section').forEach(section => {
@@ -136,9 +105,7 @@ function showSection(sectionId) {
 
 //function which is used for hashing usernames and passwords
 //will be used to make the masterKey
-/**
- *
- */
+
 async function hash(value) {
     const encoder = new TextEncoder();
     const data = encoder.encode(value);
@@ -156,12 +123,9 @@ async function hash(value) {
     return hashedStringValue;
 }
 
-
 //method that checks whether the suer has logged into PH before they choose to see accounts.
 //ensures security
-/**
- *
- */
+
 function checkUserLoggedIn(sectionId) {
     if (userIDHash == null) {
         alert("You must login to PasswordHaven first!");
@@ -184,134 +148,26 @@ function home() {
     }
 }
 
-function uint8ToBase64(uint8array) {
-    let binary = '';
-    uint8array.forEach((b) => binary += String.fromCharCode(b));
-    return window.btoa(binary);
-}
-
-function base64ToUint8(base64) {
-    const binary = window.atob(base64);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) {
-        bytes[i] = binary.charCodeAt(i);
-    }
-    return bytes;
-}
-
-/**
- *
- */
 function readFromLocalStorage(readItem) {
     return JSON.parse(localStorage.getItem(readItem.toString()));
 }
 
-/**
- *
- */
 function writeToLocalStorage(key, value) {
     localStorage.setItem(key, JSON.stringify(value));
 }
 
-/**
- *
- */
+//for reading protected data from ls
 async function protectedReadFromLocalStorage(key, index) {
     let accountData = localStorage.getItem(key);
     let sensitiveData = JSON.parse(accountData);
     let account = sensitiveData[index];
-    let ct = base64ToUint8(account.password.cipherText);
-    let iv = base64ToUint8(account.password.iv);
+    let ct = Formats.base64ToUint8(account.password.cipherText);
+    let iv = Formats.base64ToUint8(account.password.iv);
     let decryptedValue = await aesDecrypt(ct, masterKey, iv);
     return decryptedValue;
 }
 
-/**
- *
- */
-function protectedWriteToLocalStorage(key, value) {
-    aesEncrypt(value, masterKey).then((encValue, iv) => {
-        let sensitiveData = {encValue, iv};
-        localStorage.setItem(key, JSON.stringify(sensitiveData));
-    });
 
-}
-
-/**
- *
- */
-function displayPasswordStrength() {
-    let password = document.getElementById("password").value;
-    let indicator = document.getElementById("passwordStrengthIndicator");
-    let strengthBar = document.getElementById("passwordStrengthBar");
-    let passwordStrength = calculatePasswordStrength(password);
-
-    let width = 0;
-    let colour = "red";
-    if (passwordStrength === "Weak") {
-        width = 30;
-        colour = "red";
-        indicator.innerText = "You should make it longer and add more numbers, special characters and capitals!";
-        indicator.classList.add("text-danger");
-    } else if (passwordStrength === "Medium") {
-        width = 60;
-        colour = "orange";
-        indicator.innerText = "Try adding more characters, and add a few numbers!";
-        indicator.classList.remove("text-danger");
-        indicator.classList.add("text-warning");
-    } else if (passwordStrength === "Strong") {
-        width = 100;
-        colour = "green";
-        indicator.innerText = "Perfect! This is a strong password to use.";
-        indicator.classList.remove("text-warning");
-        indicator.classList.add("text-success");
-    }
-
-    //applying the styles
-    strengthBar.style.width = width + "%";
-    strengthBar.style.backgroundColor = colour;
-
-}
-
-/**
- *
- */
-function calculatePasswordStrength(password) {
-    //creating a strength 'score'
-    let strengthScore = 0;
-
-    //checking length of password
-    if (password.length === 0) { // if they typed nothing
-        return "Weak";
-    }
-    if (password.length >= 2 && password.length <= 7) {
-        strengthScore += 1;
-    } else if (password.length >= 8) {
-        strengthScore += 2;
-    }
-
-    //checking for uppercase characters
-    let hasUpperCase = /[A-Z]/.test(password) ? 1 : 0;
-
-    //checking for lowercase characters
-    let hasLowerCase = /[a-z]/.test(password) ? 1 : 0;
-
-    //checking for numbers
-    let hasNumbers = /[0-9]/.test(password) ? 1 : 0;
-
-    //checking for special chars
-    let hasSpecialCharacters = /[!"£$%^&*()_+-={}[]:@~#<>?]/.test(password) ? 1 : 0;
-
-    strengthScore = strengthScore + hasSpecialCharacters + hasNumbers + hasLowerCase + hasUpperCase;
-
-    if (strengthScore <= 2) {
-        return "Weak";
-    } else if (strengthScore > 2 && strengthScore <= 4) {
-        return "Medium"
-    } else {
-        return "Strong";
-    }
-}
 
 //toggling between password and confirm password input fields visibility
 document.addEventListener("DOMContentLoaded", function () {
@@ -373,11 +229,105 @@ function hideLogoutOption() {
     document.getElementById('logoutId').style.display = 'none';
     if (userIDHash != null) {
         showSection('homeSectionPostLogin');
-    } else{
+    } else {
         showSection('home');
     }
 }
+class Formats{
+    static strToUint8(string) {
+        return new TextEncoder().encode(string);
+    }
+    static uint8ToStr(array) {
+        return new TextDecoder().decode(array);
+    }
 
+    static uint8ToBase64(uint8array) {
+        let binary = '';
+        uint8array.forEach((b) => binary += String.fromCharCode(b));
+        return window.btoa(binary);
+    }
+
+    static base64ToUint8(base64) {
+        const binary = window.atob(base64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+            bytes[i] = binary.charCodeAt(i);
+        }
+        return bytes;
+    }
+}
+
+class PasswordStrength{
+    static displayPasswordStrength() {
+        let password = document.getElementById("password").value;
+        let indicator = document.getElementById("passwordStrengthIndicator");
+        let strengthBar = document.getElementById("passwordStrengthBar");
+        let passwordStrength = PasswordStrength.calculatePasswordStrength(password);
+
+        let width = 0;
+        let colour = "red";
+        if (passwordStrength === "Weak") {
+            width = 30;
+            colour = "red";
+            indicator.innerText = "You should make it longer and add more numbers, special characters and capitals!";
+            indicator.classList.add("text-danger");
+        } else if (passwordStrength === "Medium") {
+            width = 60;
+            colour = "orange";
+            indicator.innerText = "Try adding more characters, and add a few numbers!";
+            indicator.classList.remove("text-danger");
+            indicator.classList.add("text-warning");
+        } else if (passwordStrength === "Strong") {
+            width = 100;
+            colour = "green";
+            indicator.innerText = "Perfect! This is a strong password to use.";
+            indicator.classList.remove("text-warning");
+            indicator.classList.add("text-success");
+        }
+
+        //applying the styles
+        strengthBar.style.width = width + "%";
+        strengthBar.style.backgroundColor = colour;
+
+    }
+
+    static calculatePasswordStrength(password) {
+        //creating a strength 'score'
+        let strengthScore = 0;
+
+        //checking length of password
+        if (password.length === 0) { // if they typed nothing
+            return "Weak";
+        }
+        if (password.length >= 2 && password.length <= 7) {
+            strengthScore += 1;
+        } else if (password.length >= 8) {
+            strengthScore += 2;
+        }
+
+        //checking for uppercase characters
+        let hasUpperCase = /[A-Z]/.test(password) ? 1 : 0;
+
+        //checking for lowercase characters
+        let hasLowerCase = /[a-z]/.test(password) ? 1 : 0;
+
+        //checking for numbers
+        let hasNumbers = /[0-9]/.test(password) ? 1 : 0;
+
+        //checking for special chars
+        let hasSpecialCharacters = /[!"£$%^&*()_+-={}[]:@~#<>?]/.test(password) ? 1 : 0;
+
+        strengthScore = strengthScore + hasSpecialCharacters + hasNumbers + hasLowerCase + hasUpperCase;
+
+        if (strengthScore <= 2) {
+            return "Weak";
+        } else if (strengthScore > 2 && strengthScore <= 4) {
+            return "Medium"
+        } else {
+            return "Strong";
+        }
+    }
+}
 class User {
     constructor(username, password) {
         this.username = username;
@@ -531,8 +481,8 @@ class PasswordManager {
 
             //formatting encrypted password to base64
             let ep = {};
-            ep.cipherText = uint8ToBase64(encryptedPassword.cipherText);
-            ep.iv = uint8ToBase64(encryptedPassword.iv);
+            ep.cipherText = Formats.uint8ToBase64(encryptedPassword.cipherText);
+            ep.iv = Formats.uint8ToBase64(encryptedPassword.iv);
 
             //creating instance of new account
             const account = new Account(siteName, url, username, ep, dateString);
@@ -702,7 +652,6 @@ class PasswordManager {
                         savedAccounts.splice(index, 1);
                         //then saving the updated account
                         PasswordManager.saveSiteAccountDetails(account.siteName, account.url, account.username, account.password, account.dateAdded);
-
 
                         usernameSpan.innerHTML = `<label id="${usernameId}" class="account-detail">${newUsername}</label>`;
                         passwordSpan.innerHTML = `<label id="${passwordId}" class="account-detail">*******</label>`;
