@@ -139,8 +139,8 @@ function checkUserLoggedIn(sectionId) {
 
 //PasswordHaven click
 function home() {
-    let userLoggedIn = localStorage.getItem("loggedIn");
-    if (userLoggedIn === "true") {
+    let userLoggedIn = userIDHash;
+    if (userLoggedIn != null) {
         showSection("homeSectionPostLogin");
     } else {
         showSection("home");
@@ -219,20 +219,52 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
+//event listener to change profile picture
+document.addEventListener("DOMContentLoaded", () => {
+    const imageInput = document.getElementById('imageUpload');
+    const profileImg = document.getElementById('profileImg');
+
+    const savedImage = localStorage.getItem("profileImage");
+    if (savedImage) {
+        profileImg.src = savedImage;
+    }
+
+    if (imageInput && profileImg) {
+        imageInput.addEventListener('change', function () {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const base64Image = e.target.result;
+                    profileImg.src = base64Image;
+
+                    localStorage.setItem("profileImage", base64Image);
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+});
+
+
 //to show the logout option
 function showLogoutOption() {
     document.getElementById('logoutId').style.display = 'block';
+    document.getElementById('myProfileID').style.display = 'block';
+
 }
 
 //to hide the logout option
 function hideLogoutOption() {
     document.getElementById('logoutId').style.display = 'none';
+    document.getElementById('myProfileID').style.display = 'none';
     if (userIDHash != null) {
         showSection('homeSectionPostLogin');
     } else {
         showSection('home');
     }
 }
+
 class Formats{
     static strToUint8(string) {
         return new TextEncoder().encode(string);
@@ -432,6 +464,13 @@ class User {
     static handleLogout() {
         userIDHash = null;
         hideLogoutOption();
+    }
+
+    static displayUserProfile(){
+        const basicInfoDiv = document.createElement('div');
+        basicInfoDiv.classList.add('row', 'text-center', 'fw', 'bold', 'border-bottom', 'pb-2', 'row-value');return
+
+
     }
 }
 
@@ -715,7 +754,7 @@ class PasswordManager {
                 </div>
             </div>
         </div>
-    `
+    `;
                     //appending the modal
                     document.body.appendChild(modal);
 
@@ -747,7 +786,6 @@ class PasswordManager {
 
                 //add row to container
                 accountsContainer.appendChild(row);
-
             });
         } else {
             alert("You need to login to PasswordHaven first!");
