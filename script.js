@@ -360,6 +360,26 @@ class PasswordStrength{
         }
     }
 }
+
+class UserProfile{
+    firstName = "";
+    lastName = "";
+    dateOfBirth = "";
+    gender = "";
+    address = "";
+    phoneNo = "";
+    secQ = "";
+    secAns = ""
+
+    constructor(firstName, lastName, dateOfBirth, phoneNo, gender) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.dateOfBirth = dateOfBirth;
+        this.phoneNo = phoneNo;
+        this.gender = gender;
+    }
+}
+
 class User {
     constructor(username, password) {
         this.username = username;
@@ -367,7 +387,7 @@ class User {
     }
 
     //adding user to local storage
-    static async saveUser(username, password) {
+    static async saveUser(username, password, userProfile) {
         userIDHash = await hash(username);
         let hashedFromLocalStorage = readFromLocalStorage(userIDHash);
         if (hashedFromLocalStorage !== null) {
@@ -377,6 +397,7 @@ class User {
             let hashedPassword = await hash(password);
 
             writeToLocalStorage(userIDHash, hashedPassword);
+            writeToLocalStorage(userIDHash + "-profile", userProfile);
 
             //creating the master key by hashing a combination of username and password
             masterKey = await makeMasterKey(hash(username + password));
@@ -411,19 +432,33 @@ class User {
     //method which handles the user signing up to password haven
     static handleSignUp() {
         //retrieving the email and password used in the fields
-        let username = document.getElementById('signUpEmail').value;
+        let email = document.getElementById('signUpEmail').value;
         let password = document.getElementById('signUpPassword').value;
+        let fName = document.getElementById('fName').value;
+        let lName = document.getElementById('lName').value;
+        let dob = document.getElementById('dob').value;
+        let mobileNo = document.getElementById('phoneNo').value;
+        let gender = document.getElementById('gender').value;
+
         let signUpMsg = document.getElementById('signUpMsg');
 
         //in the case that the user doesn't fill in all the fields
-        if (username === '' || password === '') {
+        if (email === '' || password === '') {
             signUpMsg.innerText = '⚠️ Please fill out all the details!';
+            signUpMsg.classList.remove('text-success');
+            signUpMsg.classList.add('text-danger');
+            return;
+        //if email is not valid email
+        }else if(email.includes('@') !== true) {
+            signUpMsg.innerText = '⚠️ Please enter a valid email!';
             signUpMsg.classList.remove('text-success');
             signUpMsg.classList.add('text-danger');
             return;
         }
 
-        User.saveUser(username, password).then(result => {
+        const userProfile = new UserProfile(fName, lName, dob, mobileNo, gender);
+
+        User.saveUser(email, password, userProfile).then(result => {
             if (result) {
                 //changing the sign-up message to notify the user
                 signUpMsg.innerText = '✅Your account was created successfully! Please login now!';
@@ -433,7 +468,11 @@ class User {
                 //clearing the input fields after successful creation
                 document.getElementById('signUpEmail').value = "";
                 document.getElementById('signUpPassword').value = "";
-
+                document.getElementById('fName').value = "";
+                document.getElementById('lName').value = "";
+                document.getElementById('dob').value = "";
+                document.getElementById('phoneNo').value = "";
+                document.getElementById('gender').value = "";
 
             } else {
                 signUpMsg.innerText = "⚠️ Your account with us already exists! Please login.";
@@ -474,9 +513,7 @@ class User {
     }
 }
 
-/**
- *
- */
+
 class PasswordManager {
     //function to retrieve the accounts from localStorage
     static getAccounts() {

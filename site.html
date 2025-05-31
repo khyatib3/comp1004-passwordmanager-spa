@@ -49,34 +49,49 @@
     <div class="container">
         <h1 class="display-4">Secure Your Passwords with PasswordHaven</h1>
         <p class="lead">The safest and easiest way to manage your passwords and accounts.</p>
-        <button class="btn btn-light btn-lg mt-3" onclick="showSection('signUpSection')">Create Account</button>
+        <button class="btn btn-light btn-lg mt-3" data-bs-toggle="modal" data-bs-target="#createPHAccountModal">Create Account</button>
         <button class="btn btn-light btn-lg mt-3" data-bs-toggle="modal" data-bs-target="#loginModal">Login</button>
     </div>
 </section>
 
-<!--&lt;!&ndash; create passwordHaven account modal pop up&ndash;&gt;-->
-<!--<div class="modal fade" id="createPHAccountModal" tabindex="-1">-->
-<!--    <div class="modal-dialog">-->
-<!--        <div class="modal-content">-->
-<!--            <div class="modal-header">-->
-<!--                <h5 class="modal-title" id="createPHAccountModalLabel">Create PasswordHaven account</h5>-->
-<!--                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>-->
-<!--            </div>-->
-<!--            <div class="modal-body">-->
-<!--                <label>Email/username:</label>-->
-<!--                <input type="email" id="signUpEmail" class="form-control">-->
-<!--                <label>Password:</label>-->
-<!--                <input type="password" id="signUpPassword" class="form-control">-->
-<!--                <p id="signUpMsg" class="mt-2 text-danger"></p>-->
-<!--            </div>-->
-<!--            <div class="modal-footer">-->
-<!--                <button class="btn btn-light btn-lg" data-bs-toggle="modal" data-bs-target="#generatePasswordModal" onclick="PasswordGenerator.generatePassword()">Generate Password</button>-->
-<!--                <button class="btn btn-primary" onclick="User.handleSignUp()"> Create PasswordHaven Account</button>-->
+<!-- create passwordHaven account modal pop up-->
+<div class="modal fade" id="createPHAccountModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createPHAccountModalLabel">Create PasswordHaven account</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <label>Email:</label>
+                <input type="email" id="signUpEmail" class="form-control">
+                <label>Password:</label>
+                <input type="password" id="signUpPassword" class="form-control">
+                <label>First Name:</label>
+                <input type="text" id="fName" class="form-control">
+                <label>Last Name:</label>
+                <input type="text" id="lName" class="form-control">
+                <label>Date of Birth:</label>
+                <input type="date" id="dob" class="form-control">
+                <label>Mobile no:</label>
+                <input type="text" id="phoneNo" class="form-control">
+                <label for="gender">Gender:</label>
+                        <select id="userGender" name="gender">
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Non-binary">Non-binary</option>
+                            <option value="NoAnswer">Prefer not to say</option>
+                        </select>
+                <p id="signUpMsg" class="mt-2 text-danger"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-light btn-lg" data-bs-toggle="modal" data-bs-target="#generatePasswordModal" onclick="PasswordGenerator.generatePassword()">Generate Password</button>
+                <button class="btn btn-primary" onclick="User.handleSignUp()"> Create PasswordHaven Account</button>
 
-<!--            </div>-->
-<!--        </div>-->
-<!--    </div>-->
-<!--</div>-->
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- logout section -->
 <section id="logoutSectionId" class="section text-center text-black align-items-center mt-2" style="background: #d3e7ef; padding-top: 5rem;">
@@ -141,56 +156,56 @@
 </section>
 
 <!-- sign up page section-->
-<section id="signUpSection" class="section container mt-3">
-    <h2 class = "text-center mb-4"> <strong> Create an Account</strong></h2>
-    <p class="lead text-center mb-5">To create your master account, enter the following details.</p>
-    <div class = "container mt-3">
-        <!--Basic Info-->
-        <label><strong>First Name:</strong></label>
-        <input type="text" id="userFirstname" class="form-control">
-        <label><strong>Last Name:</strong></label>
-        <input type="text" id="userLastName" class="form-control">
-        <label><strong>Birthday:</strong></label>
-        <input type="date" id="userBirthday" class="form-control">
-        <label for="gender">Gender:</label>
-        <select id="userGender" name="gender">
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-            <option value="Non-binary">Non-binary</option>
-            <option value="NoAnswer">Prefer not to say</option>
-        </select>
+<!--<section id="signUpSection" class="section container mt-3">-->
+<!--    <h2 class = "text-center mb-4"> <strong> Create an Account</strong></h2>-->
+<!--    <p class="lead text-center mb-5">To create your master account, enter the following details.</p>-->
+<!--    <div class = "container mt-3">-->
+<!--        &lt;!&ndash;Basic info&ndash;&gt;-->
+<!--        <label><strong>First Name:</strong></label>-->
+<!--        <input type="text" id="userFirstname" class="form-control">-->
+<!--        <label><strong>Last Name:</strong></label>-->
+<!--        <input type="text" id="userLastName" class="form-control">-->
+<!--        <label><strong>Birthday:</strong></label>-->
+<!--        <input type="date" id="userBirthday" class="form-control">-->
+<!--        <label for="gender">Gender:</label>-->
+<!--        <select id="userGender" name="gender">-->
+<!--            <option value="Male">Male</option>-->
+<!--            <option value="Female">Female</option>-->
+<!--            <option value="Non-binary">Non-binary</option>-->
+<!--            <option value="NoAnswer">Prefer not to say</option>-->
+<!--        </select>-->
 
-        <!--Credentials-->
-        <label><strong>Email:</strong></label>
-        <input type="email" id="signUpEmail" class="form-control">
-        <label><strong>Password:</strong></label>
-        <div class="input-group mb-3">
-            <input type="password" id="signUpPassword" class="form-control" oninput="PasswordStrength.displayPasswordStrength()">
-            <button class="btn btn-outline-secondary" type="button" id="togglePwd"> <i class="bi bi-eye"></i>
-            </button>
-        </div>
+<!--        &lt;!&ndash;Credentials&ndash;&gt;-->
+<!--        <label><strong>Email:</strong></label>-->
+<!--        <input type="email" id="signUpEmail" class="form-control">-->
+<!--        <label><strong>Password:</strong></label>-->
+<!--        <div class="input-group mb-3">-->
+<!--            <input type="password" id="signUpPassword" class="form-control" oninput="PasswordStrength.displayPasswordStrength()">-->
+<!--            <button class="btn btn-outline-secondary" type="button" id="togglePwd"> <i class="bi bi-eye"></i>-->
+<!--            </button>-->
+<!--        </div>-->
 
-        <!-- password strength bar -->
-        <div class="progress mt-2">
-            <div id="pwdStrengthBar" class="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-        </div>
-        <small id="pwdStrengthIndicator" class="form-text text-muted"></small>
+<!--        &lt;!&ndash; password strength bar &ndash;&gt;-->
+<!--        <div class="progress mt-2">-->
+<!--            <div id="pwdStrengthBar" class="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>-->
+<!--        </div>-->
+<!--        <small id="pwdStrengthIndicator" class="form-text text-muted"></small>-->
 
-        <!-- confirm password group -->
-        <label><strong>Confirm Password:</strong></label>
-        <div class="input-group mb-3">
-            <input type="password" id="confirmMasterPassword" class="form-control">
-            <button class="btn btn-outline-secondary" type="button" id="toggleConfirmPwd"> <i class="bi bi-eye"></i>
-            </button>
-        </div>
-        <small id="confirmPwdMsg" class="form-text text-muted"></small>
-        <p id="signUpMsg" class="mt-2 text-danger"></p>
-    </div>
-    <div class = "modal-footer">
-        <button class="btn btn-light btn-lg" data-bs-toggle="modal" data-bs-target="#generatePasswordModal" onclick="PasswordGenerator.generatePassword()">Generate Password</button>-->
-        <button class="btn btn-primary" onclick="User.handleSignUp()">rCreate PasswordHaven Account</button>
-    </div>
-</section>
+<!--        &lt;!&ndash; confirm password group &ndash;&gt;-->
+<!--        <label><strong>Confirm Password:</strong></label>-->
+<!--        <div class="input-group mb-3">-->
+<!--            <input type="password" id="confirmMasterPassword" class="form-control">-->
+<!--            <button class="btn btn-outline-secondary" type="button" id="toggleConfirmPwd"> <i class="bi bi-eye"></i>-->
+<!--            </button>-->
+<!--        </div>-->
+<!--        <small id="confirmPwdMsg" class="form-text text-muted"></small>-->
+<!--        <p id="signUpMsg" class="mt-2 text-danger"></p>-->
+<!--    </div>-->
+<!--    <div class = "modal-footer">-->
+<!--        <button class="btn btn-light btn-lg" data-bs-toggle="modal" data-bs-target="#generatePasswordModal" onclick="PasswordGenerator.generatePassword()">Generate Password</button>&ndash;&gt;-->
+<!--        <button class="btn btn-primary" onclick="User.handleSignUp()"> Create PasswordHaven Account</button>-->
+<!--    </div>-->
+<!--</section>-->
 
 
 <!-- successful account addition section to be shown after addAccount-->
