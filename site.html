@@ -93,6 +93,33 @@
     </div>
 </div>
 
+<!--setting security question modal-->
+<div class="modal fade" id="chooseSecQModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="secQLbl">Choose a Security Question and Set Your Answer for Future Verification</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" onclick="close()"></button>
+            </div>
+            <div class="modal-body">
+                <label for="chosenQ">Security Question:</label>
+                <select id="chosenQ" name="chosenQ">
+                    <option value="q1">What is your mother's maiden name?</option>
+                    <option value="q2">What city/town did your parents get married?</option>
+                    <option value="q3">What animal/breed was your first pet?</option>
+                    <option value="q4">Where was the first vacation you took?</option>
+                </select>
+                <label>Answer:</label>
+                <input type="text" id="chosenAns" class="form-control">
+                <p id="securitySetupMsg" class="mt-2 text-danger"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-success" onclick="User.setSecurityQuestion()">Submit</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- logout section -->
 <section id="logoutSectionId" class="section text-center text-black align-items-center mt-2" style="background: #d3e7ef; padding-top: 5rem;">
     <div class="container">

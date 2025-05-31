@@ -461,9 +461,12 @@ class User {
         User.saveUser(email, password, userProfile).then(result => {
             if (result) {
                 //changing the sign-up message to notify the user
-                signUpMsg.innerText = '✅Your account was created successfully! Please login now!';
-                signUpMsg.classList.remove('text-danger');
-                signUpMsg.classList.add('text-success');
+
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('createPHAccountModal')).hide();
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('chooseSecQModal')).show();
+                // signUpMsg.innerText = '✅Your account was created successfully! Please login now!';
+                // signUpMsg.classList.remove('text-danger');
+                // signUpMsg.classList.add('text-success');
 
                 //clearing the input fields after successful creation
                 document.getElementById('signUpEmail').value = "";
@@ -480,6 +483,21 @@ class User {
                 signUpMsg.classList.add('text-danger');
             }
         });
+    }
+
+    static setSecurityQuestion(){
+        let question = document.getElementById('chosenQ').value;
+        let answer = document.getElementById('chosenAns').value;
+        const userProfile = readFromLocalStorage(userIDHash+"-profile");
+        userProfile.secQ = question;
+        userProfile.secAns = answer;
+
+        writeToLocalStorage(userIDHash+"-profile", userProfile);
+
+        let msg = document.getElementById('securitySetupMsg');
+        msg.innerText = '✅Your account was created successfully! Please login now!';
+        msg.classList.remove('text-danger');
+        msg.classList.add('text-success');
     }
 
     //function that deals with user logging into password haven
